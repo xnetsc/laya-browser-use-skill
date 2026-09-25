@@ -25,11 +25,19 @@ try {
   });
   await mkdir(dist, {recursive: true});
   await rm(output, {force: true});
-  const zip = process.platform === 'darwin' ? '/usr/bin/zip' : 'zip';
-  await run(zip, ['-q', '-r', '-X', output, 'laya-browser-use'], {
-    cwd: temporary,
-    env: {...process.env, COPYFILE_DISABLE: '1'},
-  });
+  if (process.platform === 'win32') {
+    const quote = (value) => `'${value.replaceAll("'", "''")}'`;
+    await run('powershell.exe', [
+      '-NoProfile', '-NonInteractive', '-Command',
+      `Compress-Archive -LiteralPath ${quote(staged)} -DestinationPath ${quote(output)} -CompressionLevel Optimal -Force`,
+    ]);
+  } else {
+    const zip = process.platform === 'darwin' ? '/usr/bin/zip' : 'zip';
+    await run(zip, ['-q', '-r', '-X', output, 'laya-browser-use'], {
+      cwd: temporary,
+      env: {...process.env, COPYFILE_DISABLE: '1'},
+    });
+  }
   const info = await stat(output);
   console.log(`Created ${output} (${info.size} bytes)`);
 } finally {

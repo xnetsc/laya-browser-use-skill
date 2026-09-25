@@ -1,38 +1,68 @@
 # Local Laya runtime maintenance
 
-This customized installation uses no remote decision provider and no credential file.
+This installation uses no remote decision provider and no credential file.
 
 ## Installed components
 
-- `bridge.mjs`: browser-action loop and result validation
-- `laya-local.mjs`: private headless Chrome lifecycle and local inference bridge
+- `bridge.mjs`: host-neutral action loop, decision API, and result validation
+- `laya-cli.mjs`: portable JSONL and one-shot command interface
+- `laya-local.mjs`: private Chromium lifecycle and local inference bridge
 - `laya-page.html`: WebGPU model host page
-- `runtime/models/laya/`: copied `convaiinnovations/laya-multilingual` checkpoint
-- `runtime/webtorch/`: copied webtorch runtime
-- `runtime/node_modules/playwright*`: browser launch library
+- `runtime/models/laya/`: bundled `convaiinnovations/laya-multilingual` checkpoint
+- `runtime/webtorch/`: bundled webtorch runtime
+- `runtime/node_modules/playwright*`: cross-platform Chromium launcher
 
 The model page is served from a temporary loopback HTTP origin because WebGPU workers require a
 secure, cross-origin-isolated context and model loading requires byte-range responses. The server
 listens on `127.0.0.1` with an operating-system-selected ephemeral port and returns COOP/COEP
-headers. It serves static runtime files only; it does not expose a decision endpoint.
+headers. It serves static runtime files only and exposes no decision endpoint.
+
+## Browser discovery
+
+The private runtime supports Windows, Linux, and macOS. It tries these sources in order:
+
+1. `LAYA_BROWSER_EXECUTABLE`, when set
+2. Playwright's installed Google Chrome channel
+3. Playwright's installed Microsoft Edge channel
+4. common Chrome, Chromium, and Edge installation paths for the current operating system
+5. Chrome/Chromium/Edge commands found on `PATH` on Linux
+
+Every candidate must pass a loopback-origin probe for cross-origin isolation and a usable WebGPU
+adapter before the model is loaded. macOS uses Metal flags, Linux uses Vulkan flags, and Windows
+uses the browser's native WebGPU backend. Failure messages list the attempted candidates.
+
+To require a specific executable, set an absolute path before launching the host:
+
+```sh
+LAYA_BROWSER_EXECUTABLE=/absolute/path/to/chrome node laya-cli.mjs warm
+```
+
+PowerShell:
+
+```powershell
+$env:LAYA_BROWSER_EXECUTABLE = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+node .\laya-cli.mjs warm
+```
+
+An invalid explicit path fails immediately; it never silently falls back to a different browser.
 
 ## Verification
 
-From Node.js, import `bridge.mjs`, call `loadConfig()`, then call `decide()` with a synthetic state
-and a small action list. A healthy result reports:
+Import `bridge.mjs` and call `loadConfig()`, or send `{"op":"warm"}` to the JSONL CLI. A healthy
+result reports:
 
 - provider: `laya-local`
 - model: `convaiinnovations/laya-multilingual`
-- a choice present in the supplied criteria
-- finite confidence and probabilities summing to approximately one
+- backend: `webgpu`
+- the selected runtime browser and operating system
 
-On first startup, system Google Chrome is launched headlessly with GPU enabled. If it cannot launch,
-report the Chrome launch error; do not add a remote-provider or non-Chrome fallback silently.
+Then call `decide()` with a synthetic state and a small action list. The result must contain a
+supplied choice, finite confidence, and probabilities summing to approximately one.
 
 ## Updating the local runtime
 
 Copy a complete compatible model directory as one unit; do not mix checkpoint files from different
-revisions. The required files are:
+revisions. Required files:
 
 - `model.safetensors`
 - `rl_agent_config.json`
@@ -40,5 +70,5 @@ revisions. The required files are:
 - `tokenizer/tokenizer.json`
 - `tokenizer/tokenizer_config.json`
 
-When updating webtorch, replace `runtime/webtorch/` as a matched runtime build and preserve its
-`LICENSE` and `NOTICE`. Run a real local decision after every update.
+When updating webtorch, replace `runtime/webtorch/` as one matched build and preserve its `LICENSE`
+and `NOTICE`. Run a real local decision after every runtime or model update.

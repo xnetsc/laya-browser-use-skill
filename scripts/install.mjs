@@ -9,7 +9,10 @@ const args = process.argv.slice(2);
 
 function option(name) {
   const index = args.indexOf(name);
-  return index === -1 ? null : args[index + 1];
+  if (index === -1) return null;
+  const value = args[index + 1];
+  if (!value || value.startsWith('--')) throw new Error(`${name} requires a value`);
+  return value;
 }
 
 function stamp() {
@@ -20,8 +23,15 @@ async function exists(path) {
   return stat(path).then(() => true, () => false);
 }
 
-const codexHome = resolve(process.env.CODEX_HOME || join(homedir(), '.codex'));
-const target = resolve(option('--target') || join(codexHome, 'skills', 'laya-browser-use'));
+const explicitTarget = option('--target');
+const host = option('--host') || 'agents';
+if (!['agents', 'codex'].includes(host)) {
+  throw new Error('--host must be agents or codex; use --target for another host');
+}
+const hostHome = host === 'codex'
+  ? resolve(process.env.CODEX_HOME || join(homedir(), '.codex'))
+  : resolve(process.env.AGENTS_HOME || join(homedir(), '.agents'));
+const target = resolve(explicitTarget || join(hostHome, 'skills', 'laya-browser-use'));
 const force = args.includes('--force');
 const dryRun = args.includes('--dry-run');
 
@@ -32,6 +42,7 @@ if (basename(target) !== 'laya-browser-use') {
 for (const relative of [
   'SKILL.md',
   'bridge.mjs',
+  'laya-cli.mjs',
   'laya-local.mjs',
   'laya-page.html',
   'runtime/models/laya/model.safetensors',
@@ -70,4 +81,4 @@ try {
   throw error;
 }
 
-console.log('Installed laya-browser-use. Restart Codex before using it in a new task.');
+console.log('Installed laya-browser-use. Reload or restart the Skills host before using it.');

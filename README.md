@@ -1,93 +1,120 @@
 # Laya Browser Use
 
-A self-contained Codex skill for bounded browser actions selected by a local Laya decision model.
-The model, WebGPU runtime, and Playwright launcher are bundled in this repository. It does not use
-a separately managed Laya service or remote decision endpoint.
+A portable Skills-standard package for bounded browser actions selected by a bundled local Laya
+decision model. It is not tied to one agent product or browser-control namespace.
 
-## Requirements
+The project contains the checkpoint, WebGPU runtime, Chromium launcher, host-neutral module API,
+and a JSONL command interface. It uses no separately managed Laya service or remote decision
+endpoint.
 
-- macOS with Google Chrome installed in `/Applications/Google Chrome.app`
+## Supported environments
+
+- Windows, Linux, and macOS
 - Node.js 22 or newer
-- WebGPU support
-- Codex Computer Use connected to Google Chrome for the page being operated
-- About 670 MB of disk space after installation
+- Google Chrome, Chromium, or Microsoft Edge with working WebGPU for the private model runtime
+- any Skills-compatible host that can inspect and operate a target browser page
+- about 670 MB of installed data
 
-The private headless Chrome process only hosts the local model. Target-page interaction continues
-through Codex Computer Use and Google Chrome.
+The target browser and private runtime browser are separate. The target may be any browser supported
+by the host's browser/computer-use tool. The private Chromium process only runs the local model and
+never opens the target site.
 
-## Install
+## Import or install
 
-From a cloned repository or an extracted archive:
+The portable skill directory is:
+
+```text
+skills/laya-browser-use/
+```
+
+A host that supports importing a skill directory can import that folder directly.
+
+The installer defaults to the shared Agents Skills location:
 
 ```sh
 node scripts/verify.mjs
 node scripts/install.mjs
 ```
 
-The default destination is `~/.codex/skills/laya-browser-use`. Restart Codex after installation so
-new tasks can discover the skill.
+Default destination: `~/.agents/skills/laya-browser-use`.
 
-To install into a different Codex home:
+Other destinations:
 
 ```sh
-CODEX_HOME=/absolute/path/to/codex node scripts/install.mjs
+node scripts/install.mjs --host codex
+node scripts/install.mjs --target /absolute/path/to/skills/laya-browser-use
 ```
 
-An existing installation is never overwritten silently. Use `--force` to replace it; the installer
-moves the previous copy to a timestamped sibling backup first.
+PowerShell accepts the same options:
 
-## Verify the real runtime
-
-Static verification checks the complete file set and bundled model digest:
-
-```sh
-npm run verify
+```powershell
+node .\scripts\install.mjs --target 'C:\Users\me\.agents\skills\laya-browser-use'
 ```
 
-The full verification starts system Google Chrome headlessly, loads the complete model through the
-loopback HTTP host, initializes WebGPU, and runs one decision:
+An existing installation is never overwritten silently. `--force` first moves it to a timestamped
+sibling backup. Reload or restart the host after installation.
+
+## Host integration
+
+The skill provides two equivalent entry points:
+
+- `bridge.mjs`: direct module API for a host with a persistent Node.js evaluation context
+- `laya-cli.mjs jsonl`: persistent stdin/stdout protocol for any host with shell access
+
+The host retains control of authorization, accessibility capture, clicks, scrolling, typing,
+screenshots, and final verification. See
+[`references/browser-adapters.md`](skills/laya-browser-use/references/browser-adapters.md).
+
+## Browser runtime selection
+
+The runtime automatically checks Chrome, Chromium, and Edge locations appropriate for the current
+operating system. To require one executable:
 
 ```sh
+LAYA_BROWSER_EXECUTABLE=/absolute/path/to/chrome npm run verify:runtime
+```
+
+PowerShell:
+
+```powershell
+$env:LAYA_BROWSER_EXECUTABLE = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
 npm run verify:runtime
 ```
 
-No model download occurs during either check.
+The runtime uses Metal flags on macOS, Vulkan flags on Linux, and the native WebGPU backend on
+Windows. Each candidate must pass a WebGPU probe before the model is loaded.
 
-## Create a ZIP for direct transfer
+## Verify
+
+```sh
+npm test
+npm run verify:runtime
+npm run verify:cli
+```
+
+- `npm test` checks files, the model digest, host-neutral bridge behavior, and generated browser
+  candidates for Windows, Linux, and macOS.
+- `verify:runtime` loads the complete model and runs a direct module decision.
+- `verify:cli` loads the complete model through the portable JSONL protocol and runs a decision.
+
+No model download occurs during these checks.
+
+## Create a transfer archive
 
 ```sh
 npm run bundle
 ```
 
-The archive is written to `dist/laya-browser-use.zip`. The recipient extracts it and runs
-`node scripts/install.mjs` from the extracted directory.
-
-## Publish on GitHub
-
-The 644 MB checkpoint exceeds GitHub's normal per-file limit, so Git LFS is required. The repository
-already contains matching `.gitattributes` rules. Before the first commit:
-
-```sh
-brew install git-lfs
-git lfs install
-git init
-git add .
-git commit -m "Package local Laya browser skill"
-git branch -M main
-git remote add origin YOUR_GITHUB_REPOSITORY_URL
-git push -u origin main
-```
-
-Anyone cloning the repository must have Git LFS installed and run `git lfs pull` if their Git client
-does not fetch LFS objects automatically. A GitHub release ZIP is also suitable for direct transfer.
+This writes `dist/laya-browser-use.zip`. The archive contains the full checkpoint rather than Git
+LFS pointers. On Linux, the `zip` command must be installed; Windows uses PowerShell and macOS uses
+the system `zip` utility.
 
 ## Layout
 
-- `skills/laya-browser-use/`: the directory installed into Codex
-- `scripts/install.mjs`: non-destructive installer
-- `scripts/verify.mjs`: static and real-runtime verification
-- `scripts/bundle.mjs`: reproducible ZIP builder for direct transfer
+- `skills/laya-browser-use/`: portable skill directory
+- `scripts/install.mjs`: non-destructive cross-host installer
+- `scripts/verify.mjs`: static and direct-runtime verification
+- `scripts/platform-test.mjs`: cross-platform discovery and bridge unit checks
+- `scripts/cli-runtime-test.mjs`: real JSONL runtime verification
+- `scripts/bundle.mjs`: transfer archive builder
 - `licenses/` and `THIRD_PARTY_NOTICES.md`: redistribution notices
-
-See `skills/laya-browser-use/SKILL.md` for the operational contract and
-`skills/laya-browser-use/references/provider-configuration.md` for runtime maintenance.

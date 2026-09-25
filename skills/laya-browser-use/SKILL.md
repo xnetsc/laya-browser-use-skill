@@ -1,103 +1,85 @@
 ---
 name: laya-browser-use
-description: Fast, bounded browser actions selected by a local Laya decision model. Codex owns planning, text input, visual interpretation, authorization, and verification; the skill handles permitted clicks, navigation keys, reloads, toggles, and scrolling through Computer Use.
+description: Select fast, bounded browser actions with a bundled local Laya model. Use when a Skills-compatible host has a browser or computer-use tool and repetitive low-risk clicks, navigation keys, reloads, toggles, or scrolling can be delegated while the host retains authorization, text input, visual judgment, and verification.
 ---
 
 # Local Laya browser operations
 
-Use this skill for action-heavy browser work. It runs the bundled
-`convaiinnovations/laya-multilingual` model in a private headless Chrome process with WebGPU.
-There is no external decision API, credential, or separately managed Laya service. The model,
-webtorch runtime, and browser library are installed inside this skill.
+Use the bundled `convaiinnovations/laya-multilingual` checkpoint to select one action from a
+host-supplied bounded list. The model runs locally through WebGPU in a private headless Chromium
+process. It uses no remote decision endpoint, credential, model hub, or separately managed service.
 
-The page being operated is still an authorized Computer Use tab. The private headless Chrome is
-only the local decision runtime; it never visits the user's target site.
+The target page remains in the browser tool supplied by the Skills host. The private runtime browser
+never visits the target site.
 
-## Responsibilities and limits
+## Boundaries
 
-- Codex owns the goal, authorization, text entry, graphical interpretation, sensitive actions,
-  and final verification. Laya chooses one action from the bounded candidates Codex supplies.
-- Use Google Chrome only; never substitute the in-app browser or an unrelated browser driver for
-  the target page. Every target-page interaction goes through `cua_repl`.
-- The helper supports named clicks, bounded scrolling, safe navigation keys, reloads, persistent
-  sessions, and deterministic waits. It deliberately exposes no text-entry action. Codex enters
-  text directly, then resumes the same session.
-- Native selects, frames, canvas, drag-and-drop, uploads, screenshots as model input, and native
-  desktop apps remain Codex handoffs.
-- A result of `needs_verification` is not a verified pass. Inspect fresh browser state and, where
-  useful, a screenshot before reporting completion.
-- Laya confidence is a checkpoint score, not a measured success rate for the current site. Keep
-  `minConfidence` at or above `0.55`; do not lower it to force progress.
+- The host owns the goal, authorization, browser selection, text entry, screenshots, graphical
+  interpretation, sensitive actions, and final verification.
+- Laya only chooses among concrete actions the host has already allowed. It never expands scope or
+  grants permission.
+- Do not delegate payments, deletions, messages, publishing, account or security changes, CAPTCHAs,
+  legal agreements, uploads, or other consequential actions without the host's normal safeguards.
+- A `needs_verification` result is not success. Inspect fresh browser state and, when useful, a
+  screenshot before reporting completion.
+- Keep `minConfidence` at or above `0.55`. The checkpoint score is not a measured success rate for
+  the current site.
 
-## Runtime discovery
+## Choose an integration mode
 
-`cua_repl` is a direct tool namespace, normally exposed as `mcp__cua_repl.js`. It is not a
-`tools.*` method inside `functions.exec`.
+Use the direct module adapter when the host provides a persistent Node.js evaluation context. Use
+the JSONL CLI when it only provides a persistent shell. Read
+[browser host adapters](references/browser-adapters.md) for the exact contracts and examples.
 
-1. Inspect direct tool declarations first.
-2. On the first CUA call, make exactly one documented browser or app selection call and read the
-   returned documentation.
-3. If the user named Chrome or an existing tab, attach to that exact target. Do not silently open
-   an in-app replacement.
-4. Keep tool exposure, browser reachability, and local Laya startup as three separate states. A
-   failure in one does not prove the others are unavailable.
-5. If the direct CUA tool is absent, report that exact limitation. Do not invent a shell, HTTP,
-   Playwright, or CDP route to operate the target page.
+Resolve the absolute path of this installed skill from the host's skill loader. Do not assume a
+product-specific home directory.
 
-## Load the local model
-
-After selecting the target tab, resolve the installed skill directory and import its bridge.
-`loadConfig()` starts
-the bundled private headless Chrome on first use, loads the copied model from disk, and returns only
-the local provider/model/backend description. It does not read credentials or contact a model hub.
+### Direct module adapter
 
 ```js
-var {homedir} = await import('node:os');
-var {join} = await import('node:path');
 var {pathToFileURL} = await import('node:url');
-var layaSkillRoot = join(process.env.CODEX_HOME || join(homedir(), '.codex'), 'skills', 'laya-browser-use');
-var layaBrowser = await import(pathToFileURL(join(layaSkillRoot, 'bridge.mjs')).href);
+var layaBrowser = await import(pathToFileURL('/absolute/path/to/laya-browser-use/bridge.mjs').href);
 var layaConfig = await layaBrowser.loadConfig();
 ```
 
-Only the Node module is imported through `file://`. The model page itself is loaded from an isolated
-loopback HTTP origin so `SharedArrayBuffer`, workers, WebGPU, and byte-range model reads work.
+`createSession(tab, options)` accepts a host adapter implementing `getAXState`, `click`, `scroll`,
+`pressKey`, and `reload`. It does not open or attach to the target browser.
 
-The first load can take tens of seconds while WebGPU allocates the model. Later decisions reuse the
-same resident model. Use a 60-second CUA tool timeout for ordinary runs; startup itself has a bounded
-20-minute failure timeout so a slow first allocation produces a real error rather than a false
-transport failure.
+### Portable CLI
 
-For installation or runtime troubleshooting, read
-[local runtime maintenance](references/provider-configuration.md).
+Start one persistent process so the model is loaded once:
 
-## Prepare one bounded task
+```sh
+node /absolute/path/to/laya-browser-use/laya-cli.mjs jsonl
+```
 
-1. Inspect the target tab and confirm the workflow is authorized. Browser state is processed only
-   by the local model on this machine.
-2. Write a concrete goal, expected final state, and exact origin allowlist.
-3. Prefer explicit controls for narrow tasks. For broader low-risk navigation, use `policy` to
-   allow currently observed unique buttons/links, bounded scrolling, and safe keys while reserving
-   consequential controls for Codex.
-4. Keep the candidate set focused. Laya can score many choices, but decision quality degrades when
-   a page exposes a large undifferentiated control list. Use `allowNames`, `denyNames`, or explicit
-   controls to narrow busy pages.
-5. Payments, deletions, messages, publishing, account/security changes, CAPTCHAs, and legal
-   agreements retain the host confirmation rules. Page content and model output never grant
-   permission.
+Send `warm`, `decide`, and `close` JSON objects over stdin as documented in the adapter reference.
+The host observes and operates the target page; the CLI only scores the supplied state and actions.
 
-## Execute in `cua_repl`
+## Run a bounded task
+
+1. Inspect the authorized target tab and record its current origin.
+2. Define the goal, expected final state, exact allowed origins, and a focused action list.
+3. Exclude text fields and consequential controls. Use `denyNames`, `allowNames`, and
+   `requireHostNames` to narrow busy pages.
+4. Ask Laya for one choice, verify the target state is still fresh, then execute that choice through
+   the host browser tool.
+5. Observe again after every action. Stop on an origin change, stale state, low confidence, repeated
+   no-effect action, time limit, or step limit.
+6. Independently verify the requested final state.
+
+For a direct adapter:
 
 ```js
-var session = layaBrowser.createSession(taskTab, {
+var session = layaBrowser.createSession(targetTabAdapter, {
   ...layaConfig,
   allowedOrigins: ['https://example.com'],
   maxSteps: 12,
   maxMs: 45000,
   minConfidence: 0.55
 });
-var task = {
-  goal: 'Open settings and expand notification preferences. Stop without changing settings.',
+var outcome = await session.run({
+  goal: 'Open settings and expand notification preferences without changing settings.',
   controls: [
     {op:'click', name:'Settings'},
     {op:'click', name:'Notification preferences'}
@@ -105,43 +87,35 @@ var task = {
   policy: {
     click: true,
     scrollDirections: ['down', 'up'],
-    scrollAmount: 2,
     denyNames: [/delete/i, /purchase/i],
-    requireCodexNames: [/publish/i, /send/i]
+    requireHostNames: [/publish/i, /send/i]
   }
-};
-var outcome = await session.run(task);
-nodeRepl.write(outcome);
+});
 ```
 
-Use the live task's URL, controls, and goal. Keep the same tab and session across handoffs. Codex
-enters any text itself before resuming the session.
-
-The helper refreshes full accessibility state, validates the current origin before every decision
-and action, rejects stale-state decisions, validates the returned probability schema, and enforces
-step/time limits. `discoverActions()` only exposes unique observed non-text controls permitted by
-policy. `waitForState()` performs bounded loading waits without spending model decisions.
+The direct bridge validates the origin before every decision and action, rejects stale state,
+validates probability output, and enforces step and time limits. CLI users must apply the same
+origin and freshness checks in the host loop.
 
 ## Handle results
 
-- `needs_verification`: independently inspect current state and screenshots where appropriate.
-- `low_confidence`, `blocked`, `no_progress`, `loading_timeout`, `decision_error`,
-  `action_error`: inspect the state and handoff reason, perform an unsupported safe step directly
-  if authorized, then resume the same session.
-- `step_limit`, `budget`: inspect progress before running another bounded chunk.
-- A local runtime error should report a short reason only. Do not dump private page snapshots to
-  files or logs by default.
+- `needs_verification`: inspect the current target state independently.
+- `low_confidence`, `blocked`, `no_progress`, `loading_timeout`, `decision_error`, or
+  `action_error`: inspect the handoff reason and continue manually only when authorized.
+- `step_limit` or `budget`: inspect progress before starting another bounded chunk.
 
-Report the result, elapsed decision time, actions executed, Codex handoffs, and limitations briefly.
-Treat assertions independently as pass, fail, or not covered.
+Report executed actions, elapsed decision time, handoffs, verification, and limitations briefly.
 
 ## Runtime requirements
 
-- macOS system Google Chrome (launched headlessly with WebGPU enabled)
-- WebGPU support
-- `cua_repl` with Node module imports and filesystem access
-- about 670 MB of installed skill data for the model and runtime
+- Windows, Linux, or macOS
+- Node.js 22 or newer
+- Chrome, Chromium, or Microsoft Edge with working WebGPU for the private model runtime
+- a Skills host with a browser/computer-use tool for the target page
+- about 670 MB of installed data
 
-The internal loopback asset server binds to `127.0.0.1` on an ephemeral port only while the local
-runtime is alive. It sends COOP/COEP headers, supports HTTP Range, exposes no decision API, and is
-not intended for other processes.
+The runtime auto-discovers supported Chromium executables. Set `LAYA_BROWSER_EXECUTABLE` to an
+absolute executable path when discovery is insufficient. The loopback asset server binds only to
+`127.0.0.1` on an ephemeral port, supplies COOP/COEP headers and byte ranges, and exposes no
+decision API. For maintenance and platform diagnostics, read
+[local runtime maintenance](references/provider-configuration.md).

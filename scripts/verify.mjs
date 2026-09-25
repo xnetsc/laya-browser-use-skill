@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {createReadStream} from 'node:fs';
-import {access, readFile, stat} from 'node:fs/promises';
+import {readFile, stat} from 'node:fs/promises';
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 
@@ -30,8 +30,10 @@ if (major < 22) throw new Error(`Node.js 22+ is required; found ${process.versio
 const required = [
   ['SKILL.md', 100],
   ['bridge.mjs', 100],
+  ['laya-cli.mjs', 100],
   ['laya-local.mjs', 100],
   ['laya-page.html', 100],
+  ['references/browser-adapters.md', 100],
   ['references/provider-configuration.md', 100],
   ['runtime/models/laya/rl_agent_config.json', 100],
   ['runtime/models/laya/encoder/config.json', 100],
@@ -55,13 +57,10 @@ if (modelInfo.size !== expectedModel.bytes) {
 const modelHash = await digest(modelPath);
 if (modelHash !== expectedModel.sha256) throw new Error(`Unexpected model SHA-256: ${modelHash}`);
 
-if (process.platform === 'darwin') {
-  await access('/Applications/Google Chrome.app');
-}
-
 console.log(JSON.stringify({
   status: 'static-ok',
   skill: 'laya-browser-use',
+  platform: process.platform,
   modelBytes: modelInfo.size,
   modelSha256: modelHash,
 }, null, 2));

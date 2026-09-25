@@ -1,8 +1,9 @@
 import { createServer } from 'node:http';
 import { createReadStream } from 'node:fs';
-import { readFile, stat } from 'node:fs/promises';
+import { access, readFile, stat } from 'node:fs/promises';
 import { once } from 'node:events';
-import { dirname, extname, join, resolve, sep } from 'node:path';
+import { dirname, extname, join, posix, resolve, sep, win32 } from 'node:path';
+import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { chromium } from './runtime/node_modules/playwright/index.mjs';
 
@@ -39,9 +40,99 @@ function mountedPath(url) {
   return path;
 }
 
+function launchModes(platform) {
+  const base = ['--enable-unsafe-webgpu'];
+  if (platform === 'darwin') {
+    return [
+      {name: 'metal', args: [...base, '--use-angle=metal']},
+      {name: 'browser-default', args: base},
+    ];
+  }
+  if (platform === 'linux') {
+    return [
+      {name: 'vulkan', args: [...base, '--enable-features=Vulkan', '--use-angle=vulkan']},
+      {name: 'browser-default', args: base},
+    ];
+  }
+  return [{name: 'browser-default', args: base}];
+}
+
+export function platformBrowserCandidates({
+  platform = process.platform,
+  env = process.env,
+  home = homedir(),
+} = {}) {
+  const pathApi = platform === 'win32' ? win32 : posix;
+  const candidates = [];
+  const override = String(env.LAYA_BROWSER_EXECUTABLE || '').trim();
+  if (override) candidates.push({label: 'LAYA_BROWSER_EXECUTABLE', executablePath: override, required: true});
+
+  candidates.push({label: 'Google Chrome', channel: 'chrome'});
+  candidates.push({label: 'Microsoft Edge', channel: 'msedge'});
+
+  const paths = [];
+  if (platform === 'darwin') {
+    paths.push(
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      pathApi.join(home, 'Applications/Google Chrome.app/Contents/MacOS/Google Chrome'),
+      '/Applications/Chromium.app/Contents/MacOS/Chromium',
+      pathApi.join(home, 'Applications/Chromium.app/Contents/MacOS/Chromium'),
+      '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    );
+  } else if (platform === 'win32') {
+    for (const root of [
+      env.PROGRAMFILES || env.ProgramFiles,
+      env['PROGRAMFILES(X86)'] || env['ProgramFiles(x86)'],
+      env.LOCALAPPDATA || env.LocalAppData,
+    ].filter(Boolean)) {
+      paths.push(
+        pathApi.join(root, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+        pathApi.join(root, 'Chromium', 'Application', 'chrome.exe'),
+        pathApi.join(root, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+      );
+    }
+  } else if (platform === 'linux') {
+    paths.push(
+      '/usr/bin/google-chrome-stable',
+      '/usr/bin/google-chrome',
+      '/usr/bin/chromium',
+      '/usr/bin/chromium-browser',
+      '/usr/bin/microsoft-edge-stable',
+      '/snap/bin/chromium',
+    );
+    const pathValue = String(env.PATH || env.Path || '');
+    const pathDelimiter = platform === 'win32' ? ';' : ':';
+    for (const directory of pathValue.split(pathDelimiter).filter(Boolean)) {
+      for (const name of ['google-chrome-stable', 'google-chrome', 'chromium', 'chromium-browser', 'microsoft-edge-stable', 'microsoft-edge']) {
+        paths.push(pathApi.join(directory, name));
+      }
+    }
+  }
+
+  for (const executablePath of paths) {
+    candidates.push({label: executablePath, executablePath});
+  }
+  const seen = new Set();
+  return candidates
+    .filter((candidate) => {
+      const key = candidate.executablePath ? `path:${candidate.executablePath}` : `channel:${candidate.channel}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((candidate) => ({...candidate, launchModes: launchModes(platform)}));
+}
+
 async function serve(request, response) {
   try {
     const url = new URL(request.url, 'http://127.0.0.1');
+    if (url.pathname === '/probe.html') {
+      const body = Buffer.from('<!doctype html><meta charset="utf-8"><title>WebGPU probe</title>');
+      response.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8', 'Content-Length': body.length, ...ISOLATION,
+      }).end(body);
+      return;
+    }
     const path = mountedPath(url);
     if (!path) {
       response.writeHead(403, ISOLATION).end('forbidden');
@@ -78,13 +169,46 @@ async function serve(request, response) {
   }
 }
 
-async function launchBrowser() {
-  return chromium.launch({
-    headless: true,
-    ignoreDefaultArgs: ['--disable-gpu'],
-    args: ['--enable-unsafe-webgpu', '--use-angle=metal', '--enable-features=Vulkan'],
-    channel: 'chrome',
-  });
+async function pathExists(path) {
+  return access(path).then(() => true, () => false);
+}
+
+async function launchBrowser(probeUrl) {
+  const errors = [];
+  for (const candidate of platformBrowserCandidates()) {
+    if (candidate.executablePath && !(await pathExists(candidate.executablePath))) {
+      if (candidate.required) throw new Error(`LAYA_BROWSER_EXECUTABLE does not exist: ${candidate.executablePath}`);
+      continue;
+    }
+    const candidateErrors = [];
+    for (const mode of candidate.launchModes) {
+      let browser;
+      try {
+        browser = await chromium.launch({
+          headless: true,
+          ignoreDefaultArgs: ['--disable-gpu'],
+          args: mode.args,
+          ...(candidate.executablePath ? {executablePath: candidate.executablePath} : {channel: candidate.channel}),
+        });
+        const page = await browser.newPage();
+        await page.goto(probeUrl);
+        const probe = await page.evaluate(async () => {
+          if (!globalThis.crossOriginIsolated || !navigator.gpu) return {isolated: globalThis.crossOriginIsolated, gpu: false};
+          const adapter = await navigator.gpu.requestAdapter();
+          return {isolated: true, gpu: Boolean(adapter)};
+        });
+        if (!probe.isolated || !probe.gpu) throw new Error('WebGPU is unavailable');
+        return {browser, page, label: `${candidate.label} (${mode.name})`};
+      } catch (error) {
+        await browser?.close().catch(() => {});
+        const message = error instanceof Error ? error.message.split('\n')[0] : String(error);
+        candidateErrors.push(`${mode.name}: ${message}`);
+      }
+    }
+    if (candidate.required) throw new Error(`LAYA_BROWSER_EXECUTABLE failed: ${candidateErrors.join('; ')}`);
+    errors.push(`${candidate.label}: ${candidateErrors.join('; ')}`);
+  }
+  throw new Error(`No compatible Chromium browser with WebGPU was found on ${process.platform}. Set LAYA_BROWSER_EXECUTABLE to a Chrome, Chromium, or Edge executable. Attempts: ${errors.join('; ')}`);
 }
 
 async function startRuntime() {
@@ -100,9 +224,11 @@ async function startRuntime() {
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
   const address = server.address();
-  const browser = await launchBrowser();
+  let browser;
   try {
-    const page = await browser.newPage();
+    const launched = await launchBrowser(`http://127.0.0.1:${address.port}/probe.html`);
+    browser = launched.browser;
+    const page = launched.page;
     await page.goto(`http://127.0.0.1:${address.port}/laya.html`);
     await page.waitForFunction(
       () => window.__laya && (window.__laya.status().ready || window.__laya.status().error),
@@ -111,9 +237,12 @@ async function startRuntime() {
     );
     const status = await page.evaluate(() => window.__laya.status());
     if (!status.ready) throw new Error(status.error || 'Local Laya did not become ready');
-    return { server, browser, page, status };
+    return {
+      server, browser, page,
+      status: {...status, runtimeBrowser: launched.label, platform: process.platform},
+    };
   } catch (error) {
-    await browser.close().catch(() => {});
+    await browser?.close().catch(() => {});
     server.close();
     throw error;
   }

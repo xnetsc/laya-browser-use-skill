@@ -2,7 +2,10 @@ import { localDecision, warmLocalDecision } from './laya-local.mjs';
 
 export async function loadConfig() {
   const status = await warmLocalDecision();
-  return { provider: 'laya-local', model: status.model, backend: status.backend };
+  return {
+    provider: 'laya-local', model: status.model, backend: status.backend,
+    runtimeBrowser: status.runtimeBrowser, platform: status.platform,
+  };
 }
 
 const LOCAL_PROVIDER = 'laya-local';
@@ -53,7 +56,7 @@ export function validateControl(control) {
 
 function description(control) {
   if (control.description) return control.description;
-  if (control.op === 'scroll') return `Scroll ${control.direction}${(control.amount ?? 1) > 1 ? ` ${control.amount} pages` : ''}${control.targetName ? ` within ${control.targetName}` : control.point ? ' within the Codex-identified region' : ''}`;
+  if (control.op === 'scroll') return `Scroll ${control.direction}${(control.amount ?? 1) > 1 ? ` ${control.amount} pages` : ''}${control.targetName ? ` within ${control.targetName}` : control.point ? ' within the host-identified region' : ''}`;
   if (control.op === 'press') return `Press ${control.key}`;
   if (control.op === 'reload') return 'Reload the current page';
   return `Click ${control.name}`;
@@ -115,12 +118,12 @@ export function availableActions(state, controls=[]) {
   return actions;
 }
 
-// Codex may opt in to all currently observed low-risk mechanical actions.
-// Text fields are never auto-discovered; Codex supplies and enters text.
+// The host may opt in to all currently observed low-risk mechanical actions.
+// Text fields are never auto-discovered; the host supplies and enters text.
 export function discoverActions(state, policy={}) {
   const entries = parseState(state);
   const denied = policy.denyNames ?? [];
-  const requiresCodex = policy.requireCodexNames ?? [];
+  const requiresHost = policy.requireHostNames ?? [];
   const allowed = policy.allowNames ?? [];
   const counts = new Map();
   for (const entry of entries) counts.set(semanticName(entry.name),(counts.get(semanticName(entry.name)) ?? 0)+1);
@@ -128,7 +131,7 @@ export function discoverActions(state, policy={}) {
   if (policy.click === true) {
     for (const entry of entries) {
       if (!clickRoles.has(entry.role) || counts.get(semanticName(entry.name)) !== 1) continue;
-      if (denied.some(pattern => matchesPattern(entry.name,pattern)) || requiresCodex.some(pattern => matchesPattern(entry.name,pattern))) continue;
+      if (denied.some(pattern => matchesPattern(entry.name,pattern)) || requiresHost.some(pattern => matchesPattern(entry.name,pattern))) continue;
       if (allowed.length && !allowed.some(pattern => matchesPattern(entry.name,pattern))) continue;
       actions.push({op:'click',name:entry.name,index:entry.index,description:`Click ${entry.name}`});
     }
@@ -139,7 +142,7 @@ export function discoverActions(state, policy={}) {
   const validPoint = Array.isArray(policy.scrollPoint) && policy.scrollPoint.length === 2 && policy.scrollPoint.every(Number.isFinite);
   const scrollTarget = validPoint ? policy.scrollPoint : scrollMatches.length === 1 ? scrollMatches[0].index : undefined;
   const canScroll = !scrollNames.length || scrollMatches.length === 1;
-  for (const direction of policy.scrollDirections ?? []) if (['up','down'].includes(direction) && canScroll) actions.push({op:'scroll',direction,amount:scrollAmount,target:scrollTarget,description:`Scroll ${direction}${scrollAmount > 1 ? ` ${scrollAmount} pages` : ''}${scrollNames.length ? ` within ${policy.scrollTargetName}` : validPoint ? ' within the Codex-identified region' : ''}`});
+  for (const direction of policy.scrollDirections ?? []) if (['up','down'].includes(direction) && canScroll) actions.push({op:'scroll',direction,amount:scrollAmount,target:scrollTarget,description:`Scroll ${direction}${scrollAmount > 1 ? ` ${scrollAmount} pages` : ''}${scrollNames.length ? ` within ${policy.scrollTargetName}` : validPoint ? ' within the host-identified region' : ''}`});
   for (const key of policy.keys ?? []) if (safeKeys.has(key)) actions.push({op:'press',key,description:`Press ${key}`});
   if (policy.reload === true) actions.push({op:'reload',description:'Reload the current page'});
   return actions;
@@ -161,7 +164,7 @@ function result(status,history,state,startedAt,details={}) {
   return {status,handoff:handoff(status),history,state,elapsedMs:Math.round(performance.now()-startedAt),...details};
 }
 
-// This accepts only an already-authorized cua_repl tab, never opens a browser.
+// This accepts only an already-authorized host browser adapter; it never opens the target browser.
 export async function run(tab,{goal,controls=[],policy,envFile,provider,model,allowedOrigins,maxSteps=10,minConfidence=0.55,maxMs=45000,decisionTimeoutMs=20000,maxDecisionRetries=1,waitPollMs=750},prior=[]) {
   if (typeof goal !== 'string' || !goal || !Array.isArray(controls) || (!controls.length && !policy) || controls.some(control => !validateControl(control)) || !Number.isInteger(maxSteps) || maxSteps < 1 || maxSteps > 30 || !Number.isFinite(maxMs) || maxMs < 1 || maxMs > 45000 || !Number.isFinite(decisionTimeoutMs) || decisionTimeoutMs < 1000 || decisionTimeoutMs > 30000 || !Number.isInteger(maxDecisionRetries) || maxDecisionRetries < 0 || maxDecisionRetries > 2 || !Number.isFinite(minConfidence) || minConfidence < 0.55 || minConfidence > 1 || !Number.isFinite(waitPollMs) || waitPollMs < 100 || waitPollMs > 5000 || !Array.isArray(allowedOrigins) || !allowedOrigins.length) throw new Error('Invalid task contract');
   const history = [...prior];
@@ -177,7 +180,7 @@ export async function run(tab,{goal,controls=[],policy,envFile,provider,model,al
       return all.findIndex(candidate => `${candidate.op}:${candidate.index ?? ''}:${candidate.direction ?? ''}:${candidate.amount ?? ''}:${candidate.key ?? ''}:${String(candidate.target ?? '')}` === key) === index;
     });
     // Laya selects among concrete permitted actions. It is not trusted to declare a browser goal
-    // complete: once no named action from the contract is present, Codex gets the fresh state and
+    // complete: once no named action from the contract is present, the host gets the fresh state and
     // verifies completion itself. With no prior progress this is a genuine blocked handoff.
     if (!actions.length) return result(history.some(item => item.executed) ? 'needs_verification' : 'blocked',history,state,startedAt);
     let decision;
