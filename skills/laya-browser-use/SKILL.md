@@ -43,8 +43,12 @@ following information from its own browser or computer-use tool for every decisi
 - `state`: a fresh textual observation containing the current URL and relevant accessible controls
 - `actions`: the exact actions currently authorized, each with `op`, `name`, and `description`
 - `history`: actions already attempted in this bounded run and their observed effects
+- `LAYA_BROWSER_EXECUTABLE`: preferably, the absolute path to a Chrome, Chromium, or Edge executable
+  that the host knows has WebGPU support; set it before the first runtime call
 
-The host must also retain the target-tab handle and execute the selected action itself. If its
+The browser executable is for the private WebGPU model process, not the target tab or its profile.
+If the host cannot supply it, the runtime may fall back to platform discovery. The host must also
+retain the target-tab handle and execute the selected action itself. If its
 browser tool returns screenshots rather than accessibility text, the host interprets the image and
 constructs the textual `state` and bounded `actions`; the local model does not inspect the target
 screenshot. Never ask the runtime to discover controls or permissions on its own.
@@ -129,8 +133,9 @@ Report executed actions, elapsed decision time, handoffs, verification, and limi
 - a Skills host with a browser/computer-use tool for the target page
 - about 670 MB of installed data
 
-The runtime auto-discovers supported Chromium executables. Set `LAYA_BROWSER_EXECUTABLE` to an
-absolute executable path when discovery is insufficient. The loopback asset server binds only to
+The host should set `LAYA_BROWSER_EXECUTABLE` to its known WebGPU-capable Chromium executable before
+the first `loadConfig()`, `decide()`, or CLI `warm` call. The runtime auto-discovers supported
+Chromium executables only when the host does not provide one. The loopback asset server binds only to
 `127.0.0.1` on an ephemeral port, supplies COOP/COEP headers and byte ranges, and exposes no
 decision API. For maintenance and platform diagnostics, read
 [local runtime maintenance](references/provider-configuration.md).
