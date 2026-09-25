@@ -42,7 +42,15 @@ Other destinations:
 
 ```sh
 node scripts/install.mjs --host codex
+node scripts/install.mjs --host claude
 node scripts/install.mjs --target /absolute/path/to/skills/laya-browser-use
+```
+
+The Claude target installs to `~/.claude/skills/laya-browser-use`, or beneath
+`$CLAUDE_CONFIG_DIR` when that variable is set. For a project-scoped Claude Code skill:
+
+```sh
+node scripts/install.mjs --target ./.claude/skills/laya-browser-use
 ```
 
 PowerShell accepts the same options:
@@ -61,8 +69,9 @@ The skill provides two equivalent entry points:
 - `bridge.mjs`: direct module API for a host with a persistent Node.js evaluation context
 - `laya-cli.mjs jsonl`: persistent stdin/stdout protocol for any host with shell access
 
-The host retains control of authorization, accessibility capture, clicks, scrolling, typing,
-screenshots, and final verification. See
+Claude Code, Codex, or another host supplies the bounded goal, a fresh textual browser observation,
+the exact authorized action list, and action history. The host retains control of authorization,
+accessibility capture, clicks, scrolling, typing, screenshots, and final verification. See
 [`references/browser-adapters.md`](skills/laya-browser-use/references/browser-adapters.md).
 
 ## Browser runtime selection
@@ -113,6 +122,7 @@ the system `zip` utility.
 
 - `skills/laya-browser-use/`: portable skill directory
 - `scripts/install.mjs`: non-destructive cross-host installer
+- `scripts/install-target.mjs`: built-in Agents, Codex, and Claude install targets
 - `scripts/verify.mjs`: static and direct-runtime verification
 - `scripts/platform-test.mjs`: cross-platform discovery and bridge unit checks
 - `scripts/cli-runtime-test.mjs`: real JSONL runtime verification

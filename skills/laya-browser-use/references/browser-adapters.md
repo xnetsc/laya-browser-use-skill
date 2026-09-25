@@ -18,6 +18,9 @@ an adapter with these asynchronous methods:
 The host owns browser selection, authorization, screenshots, text entry, and final verification.
 Translate its native browser calls into the adapter without opening a second target browser.
 
+Claude Code, Codex, and other Skills-compatible hosts use this same contract. Product-specific tool
+names belong in the host-side adapter or orchestration loop, not in this skill's model runtime.
+
 ## Portable JSONL adapter
 
 Use this mode when the host can run a persistent shell process but cannot import Node modules into

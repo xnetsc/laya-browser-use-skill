@@ -1,7 +1,7 @@
 import {cp, mkdir, rename, stat} from 'node:fs/promises';
-import {homedir} from 'node:os';
 import {basename, dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {resolveInstallTarget} from './install-target.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const source = join(projectRoot, 'skills', 'laya-browser-use');
@@ -25,13 +25,7 @@ async function exists(path) {
 
 const explicitTarget = option('--target');
 const host = option('--host') || 'agents';
-if (!['agents', 'codex'].includes(host)) {
-  throw new Error('--host must be agents or codex; use --target for another host');
-}
-const hostHome = host === 'codex'
-  ? resolve(process.env.CODEX_HOME || join(homedir(), '.codex'))
-  : resolve(process.env.AGENTS_HOME || join(homedir(), '.agents'));
-const target = resolve(explicitTarget || join(hostHome, 'skills', 'laya-browser-use'));
+const target = resolveInstallTarget({host, target: explicitTarget});
 const force = args.includes('--force');
 const dryRun = args.includes('--dry-run');
 

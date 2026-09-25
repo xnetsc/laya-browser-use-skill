@@ -34,6 +34,21 @@ the JSONL CLI when it only provides a persistent shell. Read
 Resolve the absolute path of this installed skill from the host's skill loader. Do not assume a
 product-specific home directory.
 
+### Information supplied by the host
+
+This skill is host-neutral. Claude Code, Codex, or another Skills-compatible host must provide the
+following information from its own browser or computer-use tool for every decision:
+
+- `goal`: the current bounded browser objective
+- `state`: a fresh textual observation containing the current URL and relevant accessible controls
+- `actions`: the exact actions currently authorized, each with `op`, `name`, and `description`
+- `history`: actions already attempted in this bounded run and their observed effects
+
+The host must also retain the target-tab handle and execute the selected action itself. If its
+browser tool returns screenshots rather than accessibility text, the host interprets the image and
+constructs the textual `state` and bounded `actions`; the local model does not inspect the target
+screenshot. Never ask the runtime to discover controls or permissions on its own.
+
 ### Direct module adapter
 
 ```js
