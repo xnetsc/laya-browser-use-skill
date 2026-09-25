@@ -1,0 +1,42 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Local Laya decision runtime</title>
+<pre id="status">booting…</pre>
+<script src="/dist/wgpy-main.js"></script>
+<script src="/webtorch/js/webtorch-main.js"></script>
+<script>
+const MODEL = 'convaiinnovations/laya-multilingual';
+const runtime = { ready: false, error: '', model: MODEL, backend: '', status: '' };
+const report = (value) => {
+  runtime.status = String(value);
+  document.getElementById('status').textContent = runtime.status;
+};
+
+if (webtorch.onError) webtorch.onError((error) => {
+  runtime.error = String((error && error.message) || error);
+  report('failed: ' + runtime.error);
+});
+
+(async () => {
+  try {
+    const wt = await webtorch.start({ baseURL: '/', onStatus: report });
+    runtime.backend = String(wt.backend || (wt.stats && wt.stats().backend) || '');
+    await wt.run('import webtorch\nwebtorch.use_default_io()');
+    const info = await wt.load('/models/laya/', {
+      onProgress: (progress) => report('read ' + Math.round((progress.bytes || 0) / 1048576) + ' MB'),
+      onStage: (stage) => report(String(stage.stage || stage)),
+    });
+    runtime.surface = (info && info.surface) || null;
+    runtime.ready = true;
+    report('ready: ' + MODEL + (runtime.backend ? ' on ' + runtime.backend : ''));
+    window.__laya = {
+      status: () => ({ ...runtime }),
+      decide: (request) => wt.decide(request.state, request.questions),
+    };
+  } catch (error) {
+    runtime.error = String((error && error.stack) || error);
+    report('failed: ' + runtime.error);
+    window.__laya = { status: () => ({ ...runtime }) };
+  }
+})();
+</script>

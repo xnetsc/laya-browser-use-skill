@@ -1,0 +1,17 @@
+{
+  "name": "laya-browser-use",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-contained Codex browser skill with a local Laya WebGPU decision runtime.",
+  "scripts": {
+    "install": "node scripts/install.mjs",
+    "verify": "node scripts/verify.mjs",
+    "verify:runtime": "node scripts/verify.mjs --runtime",
+    "bundle": "node scripts/bundle.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT"
+}
