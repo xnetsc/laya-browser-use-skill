@@ -2,6 +2,7 @@ import {cp, mkdir, rename, stat} from 'node:fs/promises';
 import {basename, dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {resolveInstallTarget} from './install-target.mjs';
+import {ensureModel, MODEL_ASSETS} from '../skills/laya-browser-use/prepare-model.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const source = join(projectRoot, 'skills', 'laya-browser-use');
@@ -28,6 +29,11 @@ const host = option('--host') || 'agents';
 const target = resolveInstallTarget({host, target: explicitTarget});
 const force = args.includes('--force');
 const dryRun = args.includes('--dry-run');
+const deferModel = args.includes('--defer-model');
+const allowLocalReuse = args.includes('--allow-local-reuse')
+  || process.env.LAYA_ALLOW_LOCAL_MODEL_REUSE === '1';
+const allowModelDownload = args.includes('--allow-model-download')
+  || process.env.LAYA_ALLOW_MODEL_DOWNLOAD === '1';
 
 if (basename(target) !== 'laya-browser-use') {
   throw new Error('Install target must end with laya-browser-use');
@@ -39,15 +45,31 @@ for (const relative of [
   'laya-cli.mjs',
   'laya-local.mjs',
   'laya-page.html',
-  'runtime/models/laya/model.safetensors',
+  'prepare-model.mjs',
   'runtime/models/laya/rl_agent_config.json',
   'runtime/models/laya/encoder/config.json',
-  'runtime/models/laya/tokenizer/tokenizer.json',
   'runtime/models/laya/tokenizer/tokenizer_config.json',
   'runtime/node_modules/playwright/index.mjs',
   'runtime/webtorch/dist/wgpy-main.js',
+  'runtime/webtorch/dist/wgpy-worker.js',
+  'runtime/webtorch/dist/wgpy_webgl-1.0.0-py3-none-any.whl',
+  'runtime/webtorch/dist/wgpy_webgpu-1.0.0-py3-none-any.whl',
+  'runtime/webtorch/webtorch/js/webtorch-main.js',
+  'runtime/webtorch/webtorch/js/webtorch-host.js',
+  'runtime/webtorch/webtorch/js/webtorch-worker.js',
 ]) {
   if (!(await exists(join(source, relative)))) throw new Error(`Package file is missing: ${relative}`);
+}
+
+let modelPreparation = null;
+if (!dryRun && !deferModel) {
+  modelPreparation = await ensureModel({
+    root: source,
+    allowLocalReuse,
+    useGitLfs: true,
+    allowDownload: allowModelDownload,
+  });
+  console.log(`Model preparation: ${modelPreparation.method}`);
 }
 
 let backup = null;
@@ -62,17 +84,35 @@ console.log(`Source: ${source}`);
 console.log(`Target: ${target}`);
 if (backup) console.log(`Backup: ${backup}`);
 if (dryRun) {
-  console.log('Dry run complete; no files changed.');
+  console.log(`Dry run complete; no files changed. Model preparation: ${deferModel ? 'deferred' : 'required before copy'}.`);
   process.exit(0);
 }
 
 await mkdir(dirname(target), {recursive: true});
 if (backup) await rename(target, backup);
 try {
-  await cp(source, target, {recursive: true, errorOnExist: true, force: false});
+  const omitModel = deferModel || ['local-http', 'local-files', 'browser-cache'].includes(modelPreparation?.method);
+  const deferredPaths = new Set(MODEL_ASSETS.map((asset) => resolve(source, asset.relative)));
+  await cp(source, target, {
+    recursive: true,
+    errorOnExist: true,
+    force: false,
+    filter: omitModel ? (path) => !deferredPaths.has(resolve(path)) : undefined,
+  });
 } catch (error) {
   if (backup && !(await exists(target))) await rename(backup, target);
   throw error;
 }
 
-console.log('Installed laya-browser-use. Reload or restart the Skills host before using it.');
+if (deferModel) {
+  console.log('Installed laya-browser-use without model files.');
+  console.log(`Prepare them before first use: node ${join(target, 'prepare-model.mjs')}`);
+} else if (['local-http', 'local-files', 'browser-cache'].includes(modelPreparation?.method)) {
+  const sourceLabel = modelPreparation.method === 'browser-cache'
+    ? 'a reusable browser cache is available'
+    : 'an authorized local model source is available';
+  console.log(`Installed laya-browser-use without copying model files; ${sourceLabel}.`);
+  console.log('Browser-cache recovery needs no authorization. Keep LAYA_ALLOW_LOCAL_MODEL_REUSE=1 for loopback/filesystem reuse. Set LAYA_ALLOW_MODEL_DOWNLOAD=1 only after download is authorized.');
+} else {
+  console.log('Installed laya-browser-use. Reload or restart the Skills host before using it.');
+}

@@ -1,16 +1,18 @@
 {
   "name": "laya-browser-use",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "type": "module",
   "description": "Portable browser skill with a local Laya WebGPU decision runtime.",
   "scripts": {
     "install": "node scripts/install.mjs",
-    "test": "node scripts/verify.mjs && node scripts/platform-test.mjs",
+    "fetch:model": "node skills/laya-browser-use/prepare-model.mjs",
+    "test": "node scripts/verify.mjs && node scripts/platform-test.mjs && node scripts/model-prepare-test.mjs && node scripts/install-test.mjs",
     "verify": "node scripts/verify.mjs",
     "verify:runtime": "node scripts/verify.mjs --runtime",
     "verify:cli": "node scripts/cli-runtime-test.mjs",
-    "bundle": "node scripts/bundle.mjs"
+    "bundle": "node scripts/bundle.mjs",
+    "bundle:lite": "node scripts/bundle.mjs --without-model"
   },
   "engines": {
     "node": ">=22"

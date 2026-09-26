@@ -6,6 +6,9 @@
 <script src="/webtorch/js/webtorch-main.js"></script>
 <script>
 const MODEL = 'convaiinnovations/laya-multilingual';
+const params = new URLSearchParams(location.search);
+const PYODIDE_INDEX_URL = params.get('pyodide') || undefined;
+const DEFER_MODEL_LOAD = params.get('deferModel') === '1';
 const runtime = { ready: false, error: '', model: MODEL, backend: '', status: '' };
 const report = (value) => {
   runtime.status = String(value);
@@ -19,20 +22,48 @@ if (webtorch.onError) webtorch.onError((error) => {
 
 (async () => {
   try {
-    const wt = await webtorch.start({ baseURL: '/', onStatus: report });
+    const wt = await webtorch.start({
+      baseURL: '/',
+      pyodideIndexURL: PYODIDE_INDEX_URL,
+      onStatus: report,
+    });
     runtime.backend = String(wt.backend || (wt.stats && wt.stats().backend) || '');
     await wt.run('import webtorch\nwebtorch.use_default_io()');
-    const info = await wt.load('/models/laya/', {
-      onProgress: (progress) => report('read ' + Math.round((progress.bytes || 0) / 1048576) + ' MB'),
-      onStage: (stage) => report(String(stage.stage || stage)),
-    });
-    runtime.surface = (info && info.surface) || null;
-    runtime.ready = true;
-    report('ready: ' + MODEL + (runtime.backend ? ' on ' + runtime.backend : ''));
+    const cacheInfo = async () => JSON.parse(await wt.run(
+      'import json, webtorch\njson.dumps(await webtorch.list_cache())',
+    ));
+    const readCached = async (name, offset, length) => {
+      const data = await wt.run(
+        'import webtorch\nawait webtorch.read_cache(__cache_name, __cache_offset, __cache_length)',
+        {__cache_name: name, __cache_offset: offset, __cache_length: length},
+      );
+      if (data == null) return null;
+      const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) {
+        binary += String.fromCharCode(...bytes.subarray(i, Math.min(bytes.length, i + 0x8000)));
+      }
+      return btoa(binary);
+    };
+    runtime.cache = await cacheInfo();
+    runtime.ioReady = true;
     window.__laya = {
       status: () => ({ ...runtime }),
+      cacheInfo,
+      readCached,
+      load: async () => {
+        const info = await wt.load('/models/laya/', {
+          onProgress: (progress) => report('read ' + Math.round((progress.bytes || 0) / 1048576) + ' MB'),
+          onStage: (stage) => report(String(stage.stage || stage)),
+        });
+        runtime.surface = (info && info.surface) || null;
+        runtime.ready = true;
+        report('ready: ' + MODEL + (runtime.backend ? ' on ' + runtime.backend : ''));
+        return runtime;
+      },
       decide: (request) => wt.decide(request.state, request.questions),
     };
+    if (!DEFER_MODEL_LOAD) await window.__laya.load();
   } catch (error) {
     runtime.error = String((error && error.stack) || error);
     report('failed: ' + runtime.error);

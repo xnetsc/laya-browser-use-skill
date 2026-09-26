@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {createReadStream} from 'node:fs';
 import {readFile, stat} from 'node:fs/promises';
 import {dirname, join, resolve} from 'node:path';
@@ -33,6 +34,7 @@ const required = [
   ['laya-cli.mjs', 100],
   ['laya-local.mjs', 100],
   ['laya-page.html', 100],
+  ['prepare-model.mjs', 1000],
   ['references/browser-adapters.md', 100],
   ['references/provider-configuration.md', 100],
   ['runtime/models/laya/rl_agent_config.json', 100],
@@ -41,15 +43,38 @@ const required = [
   ['runtime/models/laya/tokenizer/tokenizer_config.json', 100],
   ['runtime/node_modules/playwright/index.mjs', 100],
   ['runtime/webtorch/dist/wgpy-main.js', 1000],
+  ['runtime/webtorch/dist/wgpy-worker.js', 1000],
+  ['runtime/webtorch/dist/wgpy_webgl-1.0.0-py3-none-any.whl', 1000],
+  ['runtime/webtorch/dist/wgpy_webgpu-1.0.0-py3-none-any.whl', 1000],
+  ['runtime/webtorch/webtorch/js/webtorch-main.js', 1000],
+  ['runtime/webtorch/webtorch/js/webtorch-host.js', 1000],
+  ['runtime/webtorch/webtorch/js/webtorch-worker.js', 1000],
 ];
 for (const [relative, minimumBytes] of required) await requireFile(relative, minimumBytes);
+
+const gitMetadata = await stat(join(projectRoot, '.git')).then(() => true, () => false);
+if (gitMetadata) {
+  for (const [relative] of required) {
+    const repositoryPath = `skills/laya-browser-use/${relative}`;
+    try {
+      execFileSync('git', ['ls-files', '--error-unmatch', '--', repositoryPath], {
+        cwd: projectRoot,
+        stdio: 'ignore',
+      });
+    } catch {
+      throw new Error(`Required package file is not tracked by Git: ${repositoryPath}`);
+    }
+  }
+}
 
 const skillText = await readFile(join(skillRoot, 'SKILL.md'), 'utf8');
 if (!/^---\s*\nname: laya-browser-use\n/m.test(skillText)) {
   throw new Error('SKILL.md frontmatter does not declare laya-browser-use');
 }
 
-const modelPath = await requireFile('runtime/models/laya/model.safetensors', expectedModel.bytes);
+const modelPath = await requireFile('runtime/models/laya/model.safetensors', expectedModel.bytes).catch((error) => {
+  throw new Error(`${error.message}\nRun: node skills/laya-browser-use/prepare-model.mjs`);
+});
 const modelInfo = await stat(modelPath);
 if (modelInfo.size !== expectedModel.bytes) {
   throw new Error(`Unexpected model size: ${modelInfo.size}`);
