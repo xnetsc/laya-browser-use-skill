@@ -8,6 +8,13 @@ the returned candidate, probability distribution, and confidence. Low confidence
 the observed state is incomplete or ambiguous; the host may gather more facts and retry or accept
 the result according to its own policy.
 
+The same rule applies to categories in a page list. A goal such as “choose the code repository”
+cannot be answered from button names such as `GitHub` and `Hugging Face`; those names do not state
+their types. The host must put the observed facts in the state and candidate descriptions, for
+example: `GitHub is a source-code repository` and `Hugging Face is a model repository`, then ask
+for the candidate explicitly recorded as the source-code repository. The adapter may select the
+GitHub action from that direct fact, but it must not infer the category from the names or URLs.
+
 The skill does not assume a particular agent product or browser-control namespace. The target page
 stays in the browser tool supplied by the host. The private Chromium process started by
 `laya-local.mjs` is only the local model runtime and never opens the target site.

@@ -11,7 +11,7 @@ export async function loadConfig() {
 
 const LOCAL_PROVIDER = 'laya-local';
 const LOCAL_MODEL = modelManifest().model;
-const instructions = 'Select the single candidate action whose supplied description directly matches the stated goal and explicit current facts. Do not infer missing steps, hidden state, causes, or future consequences. Do not repeat an action already reflected in the current state.';
+const instructions = 'Select the single candidate action whose supplied description directly matches the stated goal and explicit current facts. Treat names, URLs, and platform labels as opaque unless the state or candidate description explicitly states the relevant type or property. Do not infer that GitHub, Hugging Face, or any other label is a code repository, model repository, or other category. Do not infer missing steps, hidden state, causes, or future consequences. Do not repeat an action already reflected in the current state.';
 const clickRoles = new Set(['button','link','checkBox','checkbox','check box','radio button','radioButton','menu item','menuItem','tab','switch','toggle button','togglebutton','menu button']);
 const supportedKeys = new Set(['Enter','Escape','Tab','Shift+Tab','PageUp','PageDown','Home','End']);
 

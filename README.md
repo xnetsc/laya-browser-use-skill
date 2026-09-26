@@ -116,6 +116,12 @@ and supplied in the state. The host must inspect each answer together with its p
 distribution and confidence. Low confidence commonly means the state is incomplete or ambiguous;
 the host may add facts and retry, or explicitly accept the result according to its own policy. The
 skill does not impose a threshold or block a result.
+Do not treat names, URLs, or platform labels as type facts. A list containing `GitHub` and `Hugging
+Face` does not by itself answer “which is the code repository”; the host must first supply facts
+such as `GitHub is a source-code repository` and `Hugging Face is a model repository`. Then ask
+“Select the candidate explicitly recorded as the source-code repository” with those two names as
+the choices. The direct answer is `GitHub`; inferring the types from the names is outside this
+skill.
 See [`references/decision-api.md`](skills/laya-browser-use/references/decision-api.md). For the
 optional browser adapter, see
 [`references/browser-adapters.md`](skills/laya-browser-use/references/browser-adapters.md).

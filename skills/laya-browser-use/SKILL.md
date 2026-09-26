@@ -31,6 +31,27 @@ this skill.
 - Send multiple questions about the same state together so the runtime can share their encoder work.
 - The state must not contain missing premises, hypotheses, unresolved ambiguity, or material that
   requires deriving new facts. Compute or obtain those facts before calling Laya.
+- Names and URLs are not type facts. Do not expect Laya to know that a platform name, host name, or
+  URL means "source-code repository", "model repository", or any other category. A state containing
+  only `GitHub` and `Hugging Face` is insufficient for the question "which is the code repository?".
+  The host must record the observed types first, then ask a direct question:
+
+  ```js
+  state: {facts: [
+    'candidate GitHub is a source-code repository',
+    'candidate Hugging Face is a model repository'
+  ]},
+  questions: {
+    repo: {
+      type: 'choice',
+      instructions: 'Select the candidate explicitly recorded as the source-code repository.',
+      criteria: {github: 'GitHub', hf: 'Hugging Face'}
+    }
+  }
+  ```
+
+  The expected answer is `github` because that follows from the supplied facts. If the type is not
+  stated, do not call the skill to infer it; add the fact outside the skill first.
 - Each answer includes confidence as returned metadata. Interpret it together with the facts and
   the declared question; it is not a measured success rate for the caller's data. The host must
   inspect the answer, probability distribution, and confidence together. Low confidence commonly

@@ -15,6 +15,35 @@ answer together with its probability distribution and confidence. Low confidence
 incomplete or ambiguous state; the host may supplement facts and retry or explicitly accept the
 result. The interface does not impose a confidence threshold or block a result.
 
+### Category-selection example
+
+Candidate names, domains, and URLs do not establish their category. This is not a valid request:
+
+```js
+state: {facts: ['the list contains GitHub and Hugging Face']}
+instructions: 'Select the code repository.'
+```
+
+It requires outside knowledge about what each name represents. Supply the observed facts first and
+make the criterion explicit:
+
+```js
+state: {facts: [
+  'candidate GitHub is a source-code repository',
+  'candidate Hugging Face is a model repository'
+]}
+questions: {
+  repo: {
+    type: 'choice',
+    instructions: 'Select the candidate explicitly recorded as the source-code repository.',
+    criteria: {github: 'GitHub', hf: 'Hugging Face'}
+  }
+}
+```
+
+This answer is `github` because the supplied facts state that directly. If a candidate's type is
+not already known, resolve it outside the interface before submitting the question.
+
 ## Questions
 
 `questions` is an object keyed by caller-defined ids. Related questions should be submitted in one
