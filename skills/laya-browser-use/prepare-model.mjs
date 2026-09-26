@@ -2,7 +2,7 @@
 
 import {createHash} from 'node:crypto';
 import {spawn, execFileSync} from 'node:child_process';
-import {createReadStream, realpathSync} from 'node:fs';
+import {createReadStream, readFileSync, realpathSync} from 'node:fs';
 import {mkdir, open, readdir, readFile, rename, rm, stat} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {dirname, isAbsolute, join, relative, resolve, sep} from 'node:path';
@@ -12,31 +12,29 @@ const skillRoot = dirname(fileURLToPath(import.meta.url));
 export const LOCAL_MODEL_REGISTRY = process.env.LAYA_MODEL_REGISTRY
   || join(tmpdir(), 'laya-browser-use-model-servers-v1');
 
-export const MODEL_ASSETS = [
-  {
-    relative: 'runtime/models/laya/tokenizer/tokenizer.json',
-    sourcePath: 'tokenizer/tokenizer.json',
-    bytes: 34363188,
-    sha256: '609d8f4c067cd3950f88594c5a802616cea245823836ef5848ee4fc40aab5b6f',
-  },
-  {
-    relative: 'runtime/models/laya/model.safetensors',
-    sourcePath: 'model.safetensors',
-    bytes: 643835514,
-    sha256: '9d628fd971b700382ac6f65920a86f149777b2e748e0c955fb3b19695aa8f204',
-  },
-];
+const MODEL_MANIFEST_PATH = join(skillRoot, 'runtime', 'models', 'laya', 'manifest.json');
+const MODEL_SPEC = JSON.parse(readFileSync(MODEL_MANIFEST_PATH, 'utf8'));
+if (MODEL_SPEC?.protocol !== 1 || typeof MODEL_SPEC.model !== 'string' || !Array.isArray(MODEL_SPEC.assets)) {
+  throw new Error('Invalid bundled model manifest.');
+}
+export const MODEL_ASSETS = MODEL_SPEC.assets.map((asset) => ({...asset}));
+export const MODEL_SUPPORT_FILES = (MODEL_SPEC.supportFiles || []).map((file) => ({...file}));
 
-const DEFAULT_BASE_URLS = [
-  'https://media.githubusercontent.com/media/xnetsc/laya-browser-use-skill/main/skills/laya-browser-use/runtime/models/laya/',
-  'https://hf-mirror.com/convaiinnovations/laya-multilingual/resolve/main/',
-  'https://huggingface.co/convaiinnovations/laya-multilingual/resolve/main/',
-];
+const MODEL_PREFIX = 'runtime/models/laya/';
+
+export function modelLocalPath(asset) {
+  const relativePath = String(asset?.relative || '');
+  return relativePath.startsWith(MODEL_PREFIX) ? relativePath.slice(MODEL_PREFIX.length) : relativePath;
+}
+
+const DEFAULT_BASE_URLS = Array.isArray(MODEL_SPEC.sources) ? MODEL_SPEC.sources : [];
 
 export function modelManifest() {
   return {
-    protocol: 1,
-    model: 'convaiinnovations/laya-multilingual',
+    protocol: MODEL_SPEC.protocol,
+    model: MODEL_SPEC.model,
+    sources: [...DEFAULT_BASE_URLS],
+    supportFiles: MODEL_SUPPORT_FILES.map((file) => ({...file})),
     assets: MODEL_ASSETS.map(({relative, sourcePath, bytes, sha256}) => ({
       relative, sourcePath, bytes, sha256,
     })),
@@ -57,7 +55,7 @@ export async function validAsset(root, asset) {
 }
 
 async function validModelAsset(modelRoot, asset) {
-  const path = join(modelRoot, asset.sourcePath);
+  const path = join(modelRoot, modelLocalPath(asset));
   const info = await stat(path).catch(() => null);
   if (!info?.isFile() || info.size !== asset.bytes) return false;
   return await digest(path) === asset.sha256;
@@ -66,11 +64,10 @@ async function validModelAsset(modelRoot, asset) {
 export async function validModelDirectory(modelRoot) {
   if (!modelRoot || !isAbsolute(modelRoot)) return false;
   for (const asset of MODEL_ASSETS) if (!(await validModelAsset(modelRoot, asset))) return false;
-  for (const relativePath of [
-    'rl_agent_config.json', 'encoder/config.json', 'tokenizer/tokenizer_config.json',
-  ]) {
-    const info = await stat(join(modelRoot, relativePath)).catch(() => null);
-    if (!info?.isFile() || !info.size) return false;
+  for (const file of MODEL_SUPPORT_FILES) {
+    const path = join(modelRoot, file.path);
+    const info = await stat(path).catch(() => null);
+    if (!info?.isFile() || info.size !== file.bytes || await digest(path) !== file.sha256) return false;
   }
   return true;
 }
@@ -82,11 +79,15 @@ function sourceBases(env) {
 }
 
 function sameManifest(value) {
-  if (value?.protocol !== 1 || value.model !== 'convaiinnovations/laya-multilingual') return false;
+  if (value?.protocol !== MODEL_SPEC.protocol || value.model !== MODEL_SPEC.model) return false;
   return MODEL_ASSETS.every((expected) => value.assets?.some((actual) =>
-    actual.sourcePath === expected.sourcePath
+    actual.relative === expected.relative
+    && actual.sourcePath === expected.sourcePath
     && actual.bytes === expected.bytes
-    && actual.sha256 === expected.sha256));
+    && actual.sha256 === expected.sha256))
+    && MODEL_SUPPORT_FILES.every((expected) => value.supportFiles?.some((actual) =>
+      actual.path === expected.path && actual.bytes === expected.bytes
+      && actual.sha256 === expected.sha256));
 }
 
 async function probeLocalBase(baseUrl) {
@@ -97,7 +98,7 @@ async function probeLocalBase(baseUrl) {
   });
   if (!manifestResponse.ok || !sameManifest(await manifestResponse.json())) return false;
   for (const asset of MODEL_ASSETS) {
-    const response = await fetch(new URL(`models/laya/${asset.sourcePath}`, base), {
+    const response = await fetch(new URL(`models/laya/${modelLocalPath(asset)}`, base), {
       headers: {Range: 'bytes=0-0'},
       signal: AbortSignal.timeout(1500),
     });
@@ -286,6 +287,17 @@ export async function ensureModel({
     return {status: 'ready', method: 'browser-cache', browserProfile: local.browserProfile, baseUrl: local.baseUrl};
   }
 
+  const missingSupport = [];
+  const modelRoot = join(root, 'runtime', 'models', 'laya');
+  for (const file of MODEL_SUPPORT_FILES) {
+    const path = join(modelRoot, file.path);
+    const info = await stat(path).catch(() => null);
+    if (!info?.isFile() || info.size !== file.bytes || await digest(path) !== file.sha256) missingSupport.push(file.path);
+  }
+  if (missingSupport.length) {
+    throw new Error(`Manifest support files are missing or invalid: ${missingSupport.join(', ')}`);
+  }
+
   if (useGitLfs) {
     const lfsCompleted = await tryGitLfs(root);
     missing = [];
@@ -306,7 +318,7 @@ async function main() {
   const checkOnly = args.includes('--check');
   const lfsOnly = args.includes('--lfs-only');
   const result = checkOnly
-    ? {status: (await Promise.all(MODEL_ASSETS.map((asset) => validAsset(skillRoot, asset)))).every(Boolean) ? 'ready' : 'missing', method: 'check'}
+    ? {status: (await validModelDirectory(join(skillRoot, 'runtime', 'models', 'laya'))) ? 'ready' : 'missing', method: 'check'}
     : await ensureModel({
       useGitLfs: !args.includes('--no-lfs'),
       allowHttpDownload: !lfsOnly,

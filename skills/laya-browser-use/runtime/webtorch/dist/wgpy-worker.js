@@ -23,13 +23,13 @@ eval("\nvar __awaiter = (this && this.__awaiter) || function (thisArg, _argument
 
 /******/ 	});
 /************************************************************************/
-/******/
+/******/ 	
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
 /******/ 	var __webpack_exports__ = {};
 /******/ 	__webpack_modules__["./src/worker.ts"](0, __webpack_exports__);
 /******/ 	wgpy = __webpack_exports__;
-/******/
+/******/ 	
 /******/ })()
 ;

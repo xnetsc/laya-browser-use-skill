@@ -1,4 +1,5 @@
 import { localDecision, warmLocalDecision } from './laya-local.mjs';
+import { modelManifest } from './prepare-model.mjs';
 
 export async function loadConfig() {
   const status = await warmLocalDecision();
@@ -9,7 +10,7 @@ export async function loadConfig() {
 }
 
 const LOCAL_PROVIDER = 'laya-local';
-const LOCAL_MODEL = 'convaiinnovations/laya-multilingual';
+const LOCAL_MODEL = modelManifest().model;
 const instructions = 'Choose the single next candidate action that best advances the goal using the current browser accessibility state and action history. Do not repeat an action already reflected in the current state.';
 const clickRoles = new Set(['button','link','checkBox','checkbox','check box','radio button','radioButton','menu item','menuItem','tab','switch','toggle button','togglebutton','menu button']);
 const supportedKeys = new Set(['Enter','Escape','Tab','Shift+Tab','PageUp','PageDown','Home','End']);

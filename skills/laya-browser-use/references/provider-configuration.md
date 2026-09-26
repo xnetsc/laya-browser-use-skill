@@ -1,24 +1,28 @@
 # Local Laya runtime maintenance
 
-This installation uses no remote decision provider and no credential file. Model transfer is a
-one-time preparation operation; inference remains local afterward.
+This installation uses no remote decision provider or credential file. Model transfer is a local
+preparation operation; inference remains local afterward. The optional `laya-service.mjs` exposes
+the same local decisions over HTTP and stdio for reuse by hosts.
 
 ## Installed components
 
 - `laya-local.mjs`: generic decision API and private Chromium lifecycle
-- `laya-cli.mjs`: portable JSONL and one-shot command interface
+- `laya-cli.mjs`: portable JSONL and one-shot client for the persistent local service
+- `laya-service.mjs`: persistent local HTTP/stdio decision service
 - `bridge.mjs`: browser candidate-selection adapter
 - `laya-page.html`: WebGPU model host page
 - `prepare-model.mjs`: Git-LFS-first model materializer with verified resumable fallback
-- `runtime/models/laya/`: `convaiinnovations/laya-multilingual` checkpoint, bundled or prepared later
+- `runtime/models/laya/`: the checkpoint named by `manifest.json`, bundled or prepared later
+- `runtime/models/laya/manifest.json`: model id, source URLs, and every asset/support-file path and digest
 - `runtime/webtorch/`: bundled webtorch runtime
 - `runtime/node_modules/playwright*`: cross-platform Chromium launcher
 
 The model page is served from a loopback HTTP origin because WebGPU workers require a secure,
 cross-origin-isolated context and model loading requires byte-range responses. The server listens on
 `127.0.0.1:8765` by default, or on the fixed `LAYA_RUNTIME_PORT` value, and returns COOP/COEP
-headers. It serves static runtime files only and exposes no decision endpoint. Its private Chrome
-profile is persistent so the same origin reuses one IndexedDB model-cache namespace.
+headers. It serves static runtime files only. The separate service listens on `127.0.0.1:8767` by
+default and uses the same private Chrome profile, which is persistent so the same origin reuses one
+IndexedDB model-cache namespace.
 
 The matched WgPy JavaScript bundles and WebGPU/WebGL wheels are part of the installed skill. The
 Python runtime defaults to Pyodide 0.27.7 on jsDelivr. A host can set
@@ -28,9 +32,9 @@ optional ONNX Vision worker or its tokenizer dependencies.
 
 ## Model preparation
 
-The checkpoint and tokenizer are Git LFS objects. The repository's `.lfsconfig` leaves them as
-pointers during normal clone and pull operations. Run `node scripts/install.mjs`; the installer asks
-Git LFS for the exact two model paths before copying the skill. A directly imported or deferred
+Model payloads may be Git LFS objects. The repository's `.lfsconfig` leaves them as pointers during
+normal clone and pull operations. Run `node scripts/install.mjs`; the installer asks Git LFS for
+the exact manifest-listed asset paths before copying the skill. A directly imported or deferred
 skill can run:
 
 ```sh
@@ -42,14 +46,14 @@ The preparer uses this order:
 1. accept existing files only when their byte counts and SHA-256 digests match;
 2. inspect exact loopback addresses registered by running Laya instances, without scanning ports;
 3. if registered HTTP is unavailable, validate and directly use its recorded model directory;
-4. only when no local source remains, run `git lfs pull` for the checkpoint and tokenizer;
-5. if Git LFS is unavailable or incomplete, use resumable HTTP with the skill's GitHub media URL,
-   the Hugging Face mirror, and the upstream Hugging Face repository;
+4. only when no local source remains, run `git lfs pull` for the manifest-listed model assets;
+5. if Git LFS is unavailable or incomplete, use resumable HTTP with the manifest's sources and
+   source paths;
 6. move each `.part` file into place only after full digest verification.
 
-Set `LAYA_MODEL_BASE_URL` to put a host-owned mirror before the built-in sources. Its layout must be
-`model.safetensors` and `tokenizer/tokenizer.json`. Re-running the command resumes an interrupted
-`.part` file. `--check` performs no download; `--lfs-only` forbids HTTP fallback; and
+Set `LAYA_MODEL_BASE_URL` to put a host-owned mirror before the built-in sources. Its layout must
+follow the manifest's `sourcePath` entries. Re-running the command resumes an interrupted `.part`
+file. `--check` performs no download; `--lfs-only` forbids HTTP fallback; and
 `--no-lfs` skips the Git LFS attempt.
 
 Every runtime that serves verified local files writes a manifest marker beneath the operating
@@ -105,7 +109,7 @@ Import `laya-local.mjs` and call `warmLocalDecision()`, or send `{"op":"warm"}` 
 result reports:
 
 - provider: `laya-local`
-- model: `convaiinnovations/laya-multilingual`
+- model: the identifier from `runtime/models/laya/manifest.json`
 - backend: `webgpu`
 - the selected runtime browser and operating system
 
@@ -114,14 +118,10 @@ and `noul` questions. The result must preserve every question id and return fini
 
 ## Updating the local runtime
 
-Copy a complete compatible model directory as one unit; do not mix checkpoint files from different
-revisions. Required files:
-
-- `model.safetensors`
-- `rl_agent_config.json`
-- `encoder/config.json`
-- `tokenizer/tokenizer.json`
-- `tokenizer/tokenizer_config.json`
-
-When updating webtorch, replace `runtime/webtorch/` as one matched build and preserve its `LICENSE`
-and `NOTICE`. Run a real local decision after every runtime or model update.
+The runtime updater checks both published manifests at startup. It stages every changed WebPyTorch
+file and every manifest-listed model/support file, verifies sizes and SHA-256 digests, and only then
+switches `runtime/webtorch/` and `runtime/models/laya/` as one transaction. It never replaces one
+file from a multi-file revision while leaving its siblings at the old revision. A failed download or
+switch leaves the old runtime and model active; old model files and the browser cache are removed
+only after the complete new model has been activated. A successful model switch restarts the
+service/browser so the new manifest is loaded. Run a real local decision after an update.

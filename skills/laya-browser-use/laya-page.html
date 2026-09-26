@@ -5,11 +5,10 @@
 <script src="/dist/wgpy-main.js"></script>
 <script src="/webtorch/js/webtorch-main.js"></script>
 <script>
-const MODEL = 'convaiinnovations/laya-multilingual';
 const params = new URLSearchParams(location.search);
 const PYODIDE_INDEX_URL = params.get('pyodide') || undefined;
 const DEFER_MODEL_LOAD = params.get('deferModel') === '1';
-const runtime = { ready: false, error: '', model: MODEL, backend: '', status: '' };
+const runtime = { ready: false, error: '', model: '', backend: '', status: '' };
 const report = (value) => {
   runtime.status = String(value);
   document.getElementById('status').textContent = runtime.status;
@@ -22,6 +21,12 @@ if (webtorch.onError) webtorch.onError((error) => {
 
 (async () => {
   try {
+    const modelManifest = await fetch('/model-manifest.json', {cache: 'no-store'}).then((response) => {
+      if (!response.ok) throw new Error('model manifest HTTP ' + response.status);
+      return response.json();
+    });
+    runtime.model = String(modelManifest.model || '');
+    if (!runtime.model) throw new Error('model manifest has no model identifier');
     const wt = await webtorch.start({
       baseURL: '/',
       pyodideIndexURL: PYODIDE_INDEX_URL,
@@ -58,7 +63,7 @@ if (webtorch.onError) webtorch.onError((error) => {
         });
         runtime.surface = (info && info.surface) || null;
         runtime.ready = true;
-        report('ready: ' + MODEL + (runtime.backend ? ' on ' + runtime.backend : ''));
+        report('ready: ' + runtime.model + (runtime.backend ? ' on ' + runtime.backend : ''));
         return runtime;
       },
       decide: (request) => wt.decide(request.state, request.questions),

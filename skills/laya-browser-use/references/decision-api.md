@@ -71,3 +71,22 @@ Warm it once, then send `score` requests:
 
 The response preserves each question id under `result.answers` and reports shared execution data
 under `result.usage`.
+
+## Persistent HTTP service
+
+Start the service once and reuse it from any local client:
+
+```sh
+node /absolute/path/to/laya-browser-use/laya-service.mjs
+```
+
+It listens on `127.0.0.1:8767` by default. `POST /v1/warm` loads the model, `POST /v1/decision`
+accepts the same `{state, questions}` payload as `localDecision`, and `POST /v1/close` stops the
+service. `POST /v1/rpc` accepts `{id, op, payload}` with `warm`, `score`, `decide`, `refresh`, or
+`close`. `GET /health` reports readiness and queue capacity. HTTP requests and the JSONL client share
+one bounded FIFO queue, so concurrent callers are serialized by the same loaded runtime. A client
+may exit without closing the service; the service stays available for reuse.
+
+At startup and on `refresh`, the service checks the published runtime and model manifests. It stages
+all changed files, verifies the complete sets, and switches all affected runtime/model directories
+in one transaction. A failed update leaves the old set active.

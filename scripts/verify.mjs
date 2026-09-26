@@ -8,10 +8,8 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const skillRoot = join(projectRoot, 'skills', 'laya-browser-use');
 const lfsExclude = 'skills/laya-browser-use/runtime/models/**';
-const expectedModel = {
-  bytes: 643835514,
-  sha256: '9d628fd971b700382ac6f65920a86f149777b2e748e0c955fb3b19695aa8f204',
-};
+const model = await import(pathToFileURL(join(skillRoot, 'prepare-model.mjs')).href);
+const withoutModel = process.argv.includes('--without-model');
 
 async function digest(path) {
   const hash = createHash('sha256');
@@ -38,25 +36,30 @@ const required = [
   ['SKILL.md', 100],
   ['bridge.mjs', 100],
   ['laya-cli.mjs', 100],
+  ['laya-service.mjs', 100],
   ['laya-local.mjs', 100],
   ['laya-page.html', 100],
   ['prepare-model.mjs', 1000],
+  ['webtorch-update.mjs', 1000],
   ['references/browser-adapters.md', 100],
   ['references/decision-api.md', 100],
   ['references/provider-configuration.md', 100],
-  ['runtime/models/laya/rl_agent_config.json', 100],
-  ['runtime/models/laya/encoder/config.json', 100],
-  ['runtime/models/laya/tokenizer/tokenizer.json', 1000],
-  ['runtime/models/laya/tokenizer/tokenizer_config.json', 100],
+  ['runtime/models/laya/manifest.json', 100],
   ['runtime/node_modules/playwright/index.mjs', 100],
   ['runtime/webtorch/dist/wgpy-main.js', 1000],
   ['runtime/webtorch/dist/wgpy-worker.js', 1000],
   ['runtime/webtorch/dist/wgpy_webgl-1.0.0-py3-none-any.whl', 1000],
   ['runtime/webtorch/dist/wgpy_webgpu-1.0.0-py3-none-any.whl', 1000],
+  ['runtime/webtorch/manifest.json', 100],
+  ['runtime/webtorch/UPSTREAM_SHA', 40],
   ['runtime/webtorch/webtorch/js/webtorch-main.js', 1000],
   ['runtime/webtorch/webtorch/js/webtorch-host.js', 1000],
   ['runtime/webtorch/webtorch/js/webtorch-worker.js', 1000],
 ];
+for (const file of model.MODEL_SUPPORT_FILES) required.push([`runtime/models/laya/${file.path}`, file.bytes]);
+if (!withoutModel) {
+  for (const asset of model.MODEL_ASSETS) required.push([asset.relative, asset.bytes]);
+}
 for (const [relative, minimumBytes] of required) await requireFile(relative, minimumBytes);
 
 const gitMetadata = await stat(join(projectRoot, '.git')).then(() => true, () => false);
@@ -79,22 +82,16 @@ if (!/^---\s*\nname: laya-browser-use\n/m.test(skillText)) {
   throw new Error('SKILL.md frontmatter does not declare laya-browser-use');
 }
 
-const modelPath = await requireFile('runtime/models/laya/model.safetensors', expectedModel.bytes).catch((error) => {
-  throw new Error(`${error.message}\nRun: node skills/laya-browser-use/prepare-model.mjs`);
-});
-const modelInfo = await stat(modelPath);
-if (modelInfo.size !== expectedModel.bytes) {
-  throw new Error(`Unexpected model size: ${modelInfo.size}`);
+if (!withoutModel && !(await model.validModelDirectory(join(skillRoot, 'runtime', 'models', 'laya')))) {
+  throw new Error('Bundled model files failed manifest verification. Run: node skills/laya-browser-use/prepare-model.mjs');
 }
-const modelHash = await digest(modelPath);
-if (modelHash !== expectedModel.sha256) throw new Error(`Unexpected model SHA-256: ${modelHash}`);
 
 console.log(JSON.stringify({
   status: 'static-ok',
   skill: 'laya-browser-use',
   platform: process.platform,
-  modelBytes: modelInfo.size,
-  modelSha256: modelHash,
+  model: withoutModel ? 'skipped' : model.modelManifest().model,
+  modelAssets: withoutModel ? 'skipped' : model.MODEL_ASSETS.map((asset) => ({bytes: asset.bytes, sha256: asset.sha256})),
 }, null, 2));
 
 if (process.argv.includes('--runtime')) {

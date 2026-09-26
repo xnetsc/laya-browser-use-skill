@@ -8,6 +8,7 @@
     "install": "node scripts/install.mjs",
     "fetch:model": "node skills/laya-browser-use/prepare-model.mjs",
     "test": "node scripts/verify.mjs && node scripts/platform-test.mjs && node scripts/model-prepare-test.mjs && node scripts/install-test.mjs",
+    "test:ci": "node scripts/verify.mjs --without-model && node scripts/platform-test.mjs && node scripts/upstream-sync-test.mjs && node scripts/webtorch-update-test.mjs && node scripts/model-prepare-test.mjs && node scripts/install-test.mjs",
     "verify": "node scripts/verify.mjs",
     "verify:runtime": "node scripts/verify.mjs --runtime",
     "verify:cli": "node scripts/cli-runtime-test.mjs",

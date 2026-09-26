@@ -3,6 +3,7 @@ import {tmpdir} from 'node:os';
 import {dirname, join, resolve, sep} from 'node:path';
 import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {MODEL_ASSETS} from '../skills/laya-browser-use/prepare-model.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(projectRoot, 'dist');
@@ -11,6 +12,7 @@ const output = join(dist, withoutModel ? 'laya-browser-use-lite.zip' : 'laya-bro
 const temporary = await mkdtemp(join(tmpdir(), 'laya-browser-use-'));
 const staged = join(temporary, 'laya-browser-use');
 const excludedRoots = new Set([join(projectRoot, '.git'), dist]);
+const modelPaths = MODEL_ASSETS.map((asset) => `/${asset.relative}`);
 
 function run(command, args, options = {}) {
   return new Promise((resolvePromise, reject) => {
@@ -27,8 +29,7 @@ try {
       if (excludedRoots.has(resolve(source))) return false;
       if (!withoutModel) return true;
       const normalized = source.split(sep).join('/');
-      return !normalized.endsWith('/runtime/models/laya/model.safetensors')
-        && !normalized.endsWith('/runtime/models/laya/tokenizer/tokenizer.json');
+      return !modelPaths.some((path) => normalized.endsWith(path));
     },
   });
   for (const relative of [
@@ -40,14 +41,14 @@ try {
     const info = await stat(join(staged, relative));
     if (!info.isFile() || info.size < 1000) throw new Error(`Bundle is missing required runtime file: ${relative}`);
   }
-  const bundledModel = join(staged, 'skills/laya-browser-use/runtime/models/laya/model.safetensors');
-  const bundledTokenizer = join(staged, 'skills/laya-browser-use/runtime/models/laya/tokenizer/tokenizer.json');
-  if (withoutModel) {
-    if (await stat(bundledModel).then(() => true, () => false)) throw new Error('Lite bundle unexpectedly contains model.safetensors');
-    if (await stat(bundledTokenizer).then(() => true, () => false)) throw new Error('Lite bundle unexpectedly contains tokenizer.json');
-  } else {
-    if ((await stat(bundledModel)).size !== 643835514) throw new Error('Full bundle contains an invalid model file');
-    if ((await stat(bundledTokenizer)).size !== 34363188) throw new Error('Full bundle contains an invalid tokenizer file');
+  for (const asset of MODEL_ASSETS) {
+    const bundled = join(staged, 'skills/laya-browser-use', asset.relative);
+    const exists = await stat(bundled).then(() => true, () => false);
+    if (withoutModel) {
+      if (exists) throw new Error(`Lite bundle unexpectedly contains ${asset.sourcePath}`);
+    } else if (!exists || (await stat(bundled)).size !== asset.bytes) {
+      throw new Error(`Full bundle contains an invalid model file: ${asset.sourcePath}`);
+    }
   }
   await mkdir(dist, {recursive: true});
   await rm(output, {force: true});

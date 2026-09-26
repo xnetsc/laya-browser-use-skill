@@ -1,25 +1,30 @@
 import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { access, mkdir, open, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { access, mkdir, open, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 import { dirname, extname, join, posix, resolve, sep, win32 } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { chromium } from './runtime/node_modules/playwright/index.mjs';
-import {
-  discoverLocalModelSource, ensureModel, LOCAL_MODEL_REGISTRY, MODEL_ASSETS,
-  modelManifest, validModelDirectory,
-} from './prepare-model.mjs';
+import {updateWebtorchRuntime} from './webtorch-update.mjs';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
+// Update the complete dependency/model transaction before loading the manifest module. This
+// prevents a direct module import from retaining constants for a superseded model revision.
+const INITIAL_UPDATE = await updateWebtorchRuntime({skillRoot: ROOT});
+const {
+  discoverLocalModelSource, ensureModel, LOCAL_MODEL_REGISTRY, MODEL_ASSETS, MODEL_SUPPORT_FILES,
+  modelLocalPath, modelManifest, validModelDirectory,
+} = await import('./prepare-model.mjs');
 const WEBTORCH = join(ROOT, 'runtime', 'webtorch');
 const MODEL = join(ROOT, 'runtime', 'models', 'laya');
 const PAGE = join(ROOT, 'laya-page.html');
 const RUNTIME_PORT = Number.parseInt(process.env.LAYA_RUNTIME_PORT || '8765', 10) || 8765;
 const PROXY_PORT = RUNTIME_PORT + 1;
+const MAX_QUEUE = Math.max(1, Number.parseInt(process.env.LAYA_MAX_QUEUE || '64', 10) || 64);
 const CACHE_FILES = [
-  ...MODEL_ASSETS.map((asset) => ({...asset, cachePath: `/models/laya/${asset.sourcePath}`})),
+  ...MODEL_ASSETS.map((asset) => ({...asset, cachePath: `/models/laya/${modelLocalPath(asset)}`})),
 ];
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -34,7 +39,32 @@ const ISOLATION = {
 };
 
 let runtimePromise = null;
-let decisionQueue = Promise.resolve();
+let initialUpdatePromise = null;
+let operationQueue = Promise.resolve();
+let waitingOperations = 0;
+let runningOperations = 0;
+
+function queueFullError() {
+  const error = new Error(`Laya decision queue is full (${MAX_QUEUE}).`);
+  error.statusCode = 429;
+  return error;
+}
+
+function enqueueOperation(operation) {
+  if (waitingOperations + runningOperations >= MAX_QUEUE) return Promise.reject(queueFullError());
+  waitingOperations += 1;
+  const pending = operationQueue.then(async () => {
+    waitingOperations -= 1;
+    runningOperations += 1;
+    try {
+      return await operation();
+    } finally {
+      runningOperations -= 1;
+    }
+  });
+  operationQueue = pending.catch(() => {});
+  return pending;
+}
 
 function mountedPath(url, modelRoot = MODEL) {
   if (url.pathname === '/laya.html') return PAGE;
@@ -51,8 +81,21 @@ function mountedPath(url, modelRoot = MODEL) {
 }
 
 function profileFor(modelRoot) {
-  const key = createHash('sha256').update(modelRoot).digest('hex').slice(0, 16);
-  return join(LOCAL_MODEL_REGISTRY, 'profiles', `model-${key}`);
+  const rootKey = createHash('sha256').update(modelRoot).digest('hex').slice(0, 16);
+  const versionKey = createHash('sha256').update(JSON.stringify(modelManifest())).digest('hex').slice(0, 16);
+  return join(LOCAL_MODEL_REGISTRY, 'profiles', `model-${rootKey}-${versionKey}`);
+}
+
+async function removeOldModelProfiles(modelRoot, keep) {
+  const profiles = join(LOCAL_MODEL_REGISTRY, 'profiles');
+  const rootKey = createHash('sha256').update(modelRoot).digest('hex').slice(0, 16);
+  const prefix = `model-${rootKey}`;
+  const entries = await readdir(profiles, {withFileTypes: true}).catch(() => []);
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !entry.name.startsWith(prefix)) continue;
+    const path = join(profiles, entry.name);
+    if (path !== keep) await rm(path, {recursive: true, force: true});
+  }
 }
 
 function launchModes(platform) {
@@ -140,8 +183,8 @@ export function platformBrowserCandidates({
 
 async function proxyModel(request, response, url, modelBaseUrl) {
   const relative = decodeURIComponent(url.pathname.slice('/models/laya/'.length));
-  const allowed = MODEL_ASSETS.some((asset) => asset.sourcePath === relative)
-    || ['rl_agent_config.json', 'encoder/config.json', 'tokenizer/tokenizer_config.json'].includes(relative);
+  const allowed = MODEL_ASSETS.some((asset) => modelLocalPath(asset) === relative)
+    || MODEL_SUPPORT_FILES.some((file) => file.path === relative);
   if (!allowed) {
     response.writeHead(403, ISOLATION).end('forbidden');
     return;
@@ -353,7 +396,10 @@ async function startRuntimeOnce({
   let browser;
   let registryPath = null;
   try {
-    if (browserProfile) await mkdir(dirname(browserProfile), {recursive: true, mode: 0o700});
+    if (browserProfile) {
+      await mkdir(dirname(browserProfile), {recursive: true, mode: 0o700});
+      if (browserProfile === profileFor(modelRoot)) await removeOldModelProfiles(modelRoot, browserProfile);
+    }
     if (!modelBaseUrl && !recoverCache) {
       registryPath = await registerModelServer(
         `http://127.0.0.1:${address.port}/`, modelRoot, browserProfile || profileFor(modelRoot),
@@ -464,7 +510,23 @@ async function startRuntime() {
   return await startRuntimeOnce({browserProfile: profileFor(MODEL)});
 }
 
+async function closeRuntimeInternal() {
+  if (!runtimePromise) return false;
+  const active = await runtimePromise.catch(() => null);
+  runtimePromise = null;
+  if (!active) return false;
+  await active.browser.close().catch(() => {});
+  await new Promise((resolve) => active.server.close(resolve));
+  return true;
+}
+
+async function checkInitialUpdate() {
+  initialUpdatePromise ??= Promise.resolve(INITIAL_UPDATE);
+  return await initialUpdatePromise;
+}
+
 async function runtime() {
+  await checkInitialUpdate();
   runtimePromise ??= startRuntime().catch((error) => {
     runtimePromise = null;
     throw error;
@@ -473,25 +535,43 @@ async function runtime() {
 }
 
 export async function warmLocalDecision() {
-  return (await runtime()).status;
+  return await enqueueOperation(async () => (await runtime()).status);
 }
 
 export async function localDecision({ state, questions }) {
-  const active = await runtime();
-  const request = { state, questions };
-  const pending = decisionQueue.then(() => active.page.evaluate(
-    (payload) => window.__laya.decide(payload), request,
-  ));
-  decisionQueue = pending.catch(() => {});
-  const result = await pending;
-  return { ...result, model: active.status.model, backend: active.status.backend };
+  return await enqueueOperation(async () => {
+    const active = await runtime();
+    const result = await active.page.evaluate(
+      (payload) => window.__laya.decide(payload), {state, questions},
+    );
+    return {...result, model: active.status.model, backend: active.status.backend};
+  });
+}
+
+export async function refreshLocalDecisionRuntime() {
+  return await enqueueOperation(async () => {
+    const hadRuntime = Boolean(runtimePromise);
+    const result = await updateWebtorchRuntime({
+      skillRoot: ROOT,
+      beforeApply: closeRuntimeInternal,
+    });
+    initialUpdatePromise = Promise.resolve(result);
+    const restartInProcess = result.status === 'updated' && hadRuntime && !result.requiresProcessRestart;
+    if (restartInProcess) await runtime();
+    return {...result, restarted: restartInProcess};
+  });
+}
+
+export function localDecisionServiceStatus() {
+  return {
+    loaded: Boolean(runtimePromise),
+    waiting: waitingOperations,
+    running: runningOperations,
+    capacity: MAX_QUEUE,
+    runtimePort: RUNTIME_PORT,
+  };
 }
 
 export async function closeLocalDecision() {
-  if (!runtimePromise) return;
-  const active = await runtimePromise.catch(() => null);
-  runtimePromise = null;
-  if (!active) return;
-  await active.browser.close().catch(() => {});
-  await new Promise((resolve) => active.server.close(resolve));
+  return await enqueueOperation(closeRuntimeInternal);
 }

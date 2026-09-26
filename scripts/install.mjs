@@ -1,8 +1,10 @@
-import {cp, mkdir, rename, stat} from 'node:fs/promises';
+import {cp, mkdir, mkdtemp, rename, rm, stat} from 'node:fs/promises';
 import {basename, dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {resolveInstallTarget} from './install-target.mjs';
-import {ensureModel, MODEL_ASSETS} from '../skills/laya-browser-use/prepare-model.mjs';
+import {
+  ensureModel, MODEL_ASSETS, MODEL_SUPPORT_FILES,
+} from '../skills/laya-browser-use/prepare-model.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const source = join(projectRoot, 'skills', 'laya-browser-use');
@@ -41,16 +43,19 @@ for (const relative of [
   'laya-cli.mjs',
   'laya-local.mjs',
   'laya-page.html',
+  'laya-service.mjs',
   'prepare-model.mjs',
+  'webtorch-update.mjs',
   'references/decision-api.md',
-  'runtime/models/laya/rl_agent_config.json',
-  'runtime/models/laya/encoder/config.json',
-  'runtime/models/laya/tokenizer/tokenizer_config.json',
+  'runtime/models/laya/manifest.json',
+  ...MODEL_SUPPORT_FILES.map((file) => `runtime/models/laya/${file.path}`),
   'runtime/node_modules/playwright/index.mjs',
   'runtime/webtorch/dist/wgpy-main.js',
   'runtime/webtorch/dist/wgpy-worker.js',
   'runtime/webtorch/dist/wgpy_webgl-1.0.0-py3-none-any.whl',
   'runtime/webtorch/dist/wgpy_webgpu-1.0.0-py3-none-any.whl',
+  'runtime/webtorch/manifest.json',
+  'runtime/webtorch/UPSTREAM_SHA',
   'runtime/webtorch/webtorch/js/webtorch-main.js',
   'runtime/webtorch/webtorch/js/webtorch-host.js',
   'runtime/webtorch/webtorch/js/webtorch-worker.js',
@@ -84,20 +89,30 @@ if (dryRun) {
 }
 
 await mkdir(dirname(target), {recursive: true});
-if (backup) await rename(target, backup);
+const stagingParent = await mkdtemp(join(dirname(target), '.laya-browser-use-install-'));
+const stagingTarget = join(stagingParent, basename(target));
 try {
   const omitModel = deferModel || ['local-http', 'local-files', 'browser-cache'].includes(modelPreparation?.method);
   const deferredPaths = new Set(MODEL_ASSETS.map((asset) => resolve(source, asset.relative)));
-  await cp(source, target, {
+  await cp(source, stagingTarget, {
     recursive: true,
     errorOnExist: true,
     force: false,
     filter: omitModel ? (path) => !deferredPaths.has(resolve(path)) : undefined,
   });
+  if (backup) await rename(target, backup);
+  try {
+    await rename(stagingTarget, target);
+  } catch (error) {
+    if (backup && !(await exists(target))) await rename(backup, target).catch(() => {});
+    throw error;
+  }
 } catch (error) {
-  if (backup && !(await exists(target))) await rename(backup, target);
+  if (backup && !(await exists(target))) await rename(backup, target).catch(() => {});
+  await rm(stagingParent, {recursive: true, force: true}).catch(() => {});
   throw error;
 }
+await rm(stagingParent, {recursive: true, force: true});
 
 if (deferModel) {
   console.log('Installed laya-browser-use without model files.');
