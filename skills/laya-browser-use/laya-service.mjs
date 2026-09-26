@@ -63,6 +63,7 @@ export async function startDecisionService({port = SERVICE_PORT} = {}) {
   api = {...bridge, ...local};
   let closing = false;
   const server = createServer(async (request, response) => {
+    let requestId = null;
     try {
       const url = new URL(request.url, `http://127.0.0.1:${port}`);
       if (request.method === 'GET' && url.pathname === '/health') {
@@ -83,6 +84,7 @@ export async function startDecisionService({port = SERVICE_PORT} = {}) {
       }
       const body = await readJson(request);
       const message = routes[url.pathname] ? {op: routes[url.pathname], payload: body} : body;
+      requestId = message?.id ?? null;
       const result = await execute(message);
       writeJson(response, 200, {id: message?.id ?? null, ok: true, result, service: serviceStatus()});
       if ((message.op === 'close' || result?.requiresProcessRestart) && !closing) {
@@ -92,6 +94,7 @@ export async function startDecisionService({port = SERVICE_PORT} = {}) {
     } catch (error) {
       const status = Number.isInteger(error?.statusCode) ? error.statusCode : 500;
       writeJson(response, status, {
+        id: requestId,
         ok: false,
         error: error instanceof Error ? error.message : String(error),
         service: serviceStatus(),

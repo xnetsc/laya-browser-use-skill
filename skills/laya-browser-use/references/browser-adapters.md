@@ -2,6 +2,11 @@
 
 Use this adapter only after constructing a fresh accessibility state made of directly observed
 facts. Resolve any missing or derived information before asking Laya to select a candidate action.
+Candidate descriptions must already state the relevant effect; do not ask the adapter to infer a
+hidden page state, plan intermediate steps, or predict an unstated consequence. The host must inspect
+the returned candidate, probability distribution, and confidence. Low confidence commonly means
+the observed state is incomplete or ambiguous; the host may gather more facts and retry or accept
+the result according to its own policy.
 
 The skill does not assume a particular agent product or browser-control namespace. The target page
 stays in the browser tool supplied by the host. The private Chromium process started by
@@ -44,7 +49,7 @@ Warm the runtime:
 Request a decision after the host has observed the page and constructed a bounded action list:
 
 ```json
-{"id":"2","op":"decide","payload":{"goal":"Advance the current goal","state":"Browser tab: Example. URL: \"https://example.com/\".\n1 button Primary action","actions":[{"op":"click","name":"Primary action","description":"Click Primary action"}],"history":[]}}
+{"id":"2","op":"decide","payload":{"goal":"Use the explicitly marked current action","state":"Browser tab: Example. URL: \"https://example.com/\".\n1 button Primary action, marked current","actions":[{"op":"click","name":"Primary action","description":"Click the action explicitly marked current"}],"history":[]}}
 ```
 
 The response contains `result.action`; execute that action with the host browser tool, observe fresh

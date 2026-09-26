@@ -1,8 +1,10 @@
 # Laya Browser Use
 
-A portable Skills-standard package for structured decisions with a bundled local Laya model. It
-supports choosing one named option, scoring ordered levels, and estimating whether a statement is
-true from an explicit fact-only context. A browser candidate-selection adapter is included.
+A portable Skills-standard package for direct fact-based scoring with a bundled local Laya model.
+It supports choosing one named option, scoring ordered levels, and estimating whether a statement
+is true only when the answer follows directly from explicit supplied facts. It is not used to infer
+missing information, derive facts, explain causes, plan steps, or predict unstated consequences.
+A browser candidate-selection adapter is included.
 
 `browser` remains in the package and skill name, but it does not limit applicability. The skill is
 recommended for every decision that fits one of the supported question types; no browser task is
@@ -109,7 +111,11 @@ The skill provides these entry points:
 - `laya-service.mjs` → persistent local HTTP service shared by HTTP and stdio clients
 - `bridge.mjs`: browser candidate-selection adapter
 
-Decision state must contain explicit facts; missing or derived facts are resolved before the call.
+Decision state must contain explicit facts; missing or derived facts are resolved before the call
+and supplied in the state. The host must inspect each answer together with its probability
+distribution and confidence. Low confidence commonly means the state is incomplete or ambiguous;
+the host may add facts and retry, or explicitly accept the result according to its own policy. The
+skill does not impose a threshold or block a result.
 See [`references/decision-api.md`](skills/laya-browser-use/references/decision-api.md). For the
 optional browser adapter, see
 [`references/browser-adapters.md`](skills/laya-browser-use/references/browser-adapters.md).

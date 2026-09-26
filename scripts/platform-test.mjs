@@ -63,5 +63,5 @@ console.log(JSON.stringify({
   status: 'platform-tests-ok',
   platforms: ['win32', 'linux', 'darwin'],
   installHosts: ['agents', 'codex', 'claude'],
-  candidateFilter: 'ok',
+  candidateFilter: 'ok', factOnlyGuidance: 'ok',
 }, null, 2));

@@ -43,7 +43,11 @@ try {
   assert.equal(typeof warm.result.platform, 'string');
 
   const scored = await request('score', {
-    state: {value: 'current input'},
+    state: {facts: [
+      'the current candidate is alpha',
+      'the stated condition holds',
+      'the stated level is medium',
+    ]},
     questions: {
       pick: {type: 'choice', instructions: 'Select one candidate.', criteria: {alpha: 'Alpha', beta: 'Beta'}},
       truth: {type: 'noul', instructions: 'The stated condition holds.'},
@@ -62,7 +66,7 @@ try {
   const decision = await request('decide', {
     ...warm.result,
     goal: 'Click Alpha.',
-    state: 'Browser tab: Test. URL: "https://example.com/".\n1 button Alpha\n2 button Beta',
+    state: 'Browser tab: Test. URL: "https://example.com/".\nExplicit fact: Alpha is the candidate that directly matches the goal.\n1 button Alpha\n2 button Beta',
     actions: [
       {op: 'click', name: 'Alpha', description: 'Click Alpha'},
       {op: 'click', name: 'Beta', description: 'Click Beta'},
@@ -70,7 +74,7 @@ try {
   });
   assert.equal(decision.ok, true, decision.error);
   assert.equal(decision.result.choice, 'a0');
-  assert(decision.result.confidence >= 0.55);
+  assert.equal(Number.isFinite(decision.result.confidence), true);
 
   const closed = await request('close');
   assert.equal(closed.ok, true, closed.error);

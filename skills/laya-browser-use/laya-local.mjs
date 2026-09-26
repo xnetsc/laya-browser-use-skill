@@ -538,7 +538,7 @@ export async function warmLocalDecision() {
   return await enqueueOperation(async () => (await runtime()).status);
 }
 
-export async function localDecision({ state, questions }) {
+export async function localDecision({state, questions}) {
   return await enqueueOperation(async () => {
     const active = await runtime();
     const result = await active.page.evaluate(

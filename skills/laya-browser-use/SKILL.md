@@ -1,6 +1,6 @@
 ---
 name: laya-browser-use
-description: Score structured decisions with a bundled local Laya model. Use whenever a task needs to pick one named option, place an item on an ordered scale, or estimate whether a statement is true from an explicit fact-only context.
+description: Score a choice, ordered level, or true/false statement only when the answer follows directly from explicit supplied facts. Never use it to infer missing information, derive facts, explain causes, plan steps, or predict consequences; complete that work first and add the results to the state.
 ---
 
 # Local Laya decisions
@@ -11,8 +11,15 @@ endpoint or model hub after model preparation. The manifest is the source of tru
 identifier, every required relative file path, source path, size, digest, and download source.
 
 `browser` is part of this skill's name, not a limit on its use. Recommend this skill for any
-decision that fits `choice`, `score`, or `noul` and has an explicit fact-only state. No target
-browser or browser task is required. Browser candidate selection is only an included adapter.
+decision that fits `choice`, `score`, or `noul`, has an explicit fact-only state, and needs no
+reasoning inside the skill. No target browser or browser task is required. Browser candidate
+selection is only an included adapter.
+
+This skill is a scorer, not a reasoner. Do not ask it to fill a missing premise, combine facts into a
+new fact, explain why something happened, plan intermediate steps, predict an unstated outcome, or
+resolve ambiguity. The host must do that work first and supply every resulting value as an explicit
+fact. If the answer does not follow directly from the supplied state and named criteria, do not call
+this skill.
 
 ## Decision interface
 
@@ -25,7 +32,11 @@ browser or browser task is required. Browser candidate selection is only an incl
 - The state must not contain missing premises, hypotheses, unresolved ambiguity, or material that
   requires deriving new facts. Compute or obtain those facts before calling Laya.
 - Each answer includes confidence as returned metadata. Interpret it together with the facts and
-  the declared question; it is not a measured success rate for the caller's data.
+  the declared question; it is not a measured success rate for the caller's data. The host must
+  inspect the answer, probability distribution, and confidence together. Low confidence commonly
+  means the state is incomplete or ambiguous; the host may add facts and retry, or explicitly accept
+  the result according to its own policy. This skill does not impose a confidence threshold or block
+  a result.
 
 ## Choose an integration mode
 
@@ -117,9 +128,12 @@ service and browser.
 ## Decision sequence
 
 1. Gather the facts needed by the decision.
-2. Resolve missing or derived facts outside Laya.
-3. Build one or more typed questions against the resulting fact-only state.
-4. Submit related questions together and consume their scored answers.
+2. Resolve every missing premise, derived value, ambiguity, plan, and prediction outside Laya.
+3. Add those results to the state as explicit facts.
+4. Build typed questions whose answers follow directly from the state and named criteria.
+5. Submit related questions together and inspect each answer's confidence and probability
+   distribution. If confidence is low, add facts and retry or explicitly accept the result according
+   to the host's policy.
 
 ## Runtime requirements
 

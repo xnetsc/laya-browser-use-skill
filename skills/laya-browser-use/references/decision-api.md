@@ -1,12 +1,19 @@
 # Decision API
 
-`localDecision({state, questions})` scores typed questions against one shared state.
+`localDecision({state, questions})` scores typed questions against one shared fact set.
 
 ## State
 
 `state` may be text or JSON. It must contain explicit facts needed by the questions. Do not put
 missing premises, hypotheses, unresolved ambiguity, or instructions to derive new facts into the
-state. Compute or obtain derived values before making the request.
+state. Compute or obtain derived values before making the request and add those values to `state`.
+
+The interface performs direct scoring/classification only. Do not use it to explain causes, infer a
+missing fact, execute a reasoning chain, choose intermediate planning steps, or predict an unstated
+consequence. The host is responsible for supplying fact-complete content and for inspecting each
+answer together with its probability distribution and confidence. Low confidence commonly indicates
+incomplete or ambiguous state; the host may supplement facts and retry or explicitly accept the
+result. The interface does not impose a confidence threshold or block a result.
 
 ## Questions
 

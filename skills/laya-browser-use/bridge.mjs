@@ -11,7 +11,7 @@ export async function loadConfig() {
 
 const LOCAL_PROVIDER = 'laya-local';
 const LOCAL_MODEL = modelManifest().model;
-const instructions = 'Choose the single next candidate action that best advances the goal using the current browser accessibility state and action history. Do not repeat an action already reflected in the current state.';
+const instructions = 'Select the single candidate action whose supplied description directly matches the stated goal and explicit current facts. Do not infer missing steps, hidden state, causes, or future consequences. Do not repeat an action already reflected in the current state.';
 const clickRoles = new Set(['button','link','checkBox','checkbox','check box','radio button','radioButton','menu item','menuItem','tab','switch','toggle button','togglebutton','menu button']);
 const supportedKeys = new Set(['Enter','Escape','Tab','Shift+Tab','PageUp','PageDown','Home','End']);
 
@@ -88,11 +88,14 @@ export async function decide({provider=LOCAL_PROVIDER,model=LOCAL_MODEL,goal,sta
     rows.reduce((sum,answer) => sum + answer.probabilities[label], 0) / rows.length]));
   const choice = labels.reduce((best,label) => probabilities[label] > probabilities[best] ? label : best, labels[0]);
   const ranked = Object.values(probabilities).sort((a,b) => b-a);
-  // Keep the original 0.55 handoff boundary meaningful when the candidate count changes: use
-  // the winner's share of the top-two mass rather than demanding an impossible 55% of every
-  // five-, ten-, or twenty-way distribution.
+  // Report the winner's share of the top-two mass so the host can apply its own confidence policy
+  // when the candidate count changes.
   const confidence = ranked[0] / Math.max(Number.EPSILON, ranked[0] + (ranked[1] ?? 0));
-  return {provider,choice,confidence,probabilities,model:result.model,apiMs:Math.round(performance.now()-startedAt),action:choice.startsWith('a') ? actions[Number(choice.slice(1))] : null};
+  return {
+    provider, choice, confidence, probabilities, model: result.model,
+    apiMs: Math.round(performance.now()-startedAt),
+    action: choice.startsWith('a') ? actions[Number(choice.slice(1))] : null,
+  };
 }
 
 export function availableActions(state, controls=[]) {
@@ -166,8 +169,8 @@ function result(status,history,state,startedAt,details={}) {
 }
 
 // This accepts a host browser adapter; it never opens the target browser.
-export async function run(tab,{goal,controls=[],policy,envFile,provider,model,allowedOrigins,maxSteps=10,minConfidence=0.55,maxMs=45000,decisionTimeoutMs=20000,maxDecisionRetries=1,waitPollMs=750},prior=[]) {
-  if (typeof goal !== 'string' || !goal || !Array.isArray(controls) || (!controls.length && !policy) || controls.some(control => !validateControl(control)) || !Number.isInteger(maxSteps) || maxSteps < 1 || maxSteps > 30 || !Number.isFinite(maxMs) || maxMs < 1 || maxMs > 45000 || !Number.isFinite(decisionTimeoutMs) || decisionTimeoutMs < 1000 || decisionTimeoutMs > 30000 || !Number.isInteger(maxDecisionRetries) || maxDecisionRetries < 0 || maxDecisionRetries > 2 || !Number.isFinite(minConfidence) || minConfidence < 0.55 || minConfidence > 1 || !Number.isFinite(waitPollMs) || waitPollMs < 100 || waitPollMs > 5000 || !Array.isArray(allowedOrigins) || !allowedOrigins.length) throw new Error('Invalid task contract');
+export async function run(tab,{goal,controls=[],policy,envFile,provider,model,allowedOrigins,maxSteps=10,maxMs=45000,decisionTimeoutMs=20000,maxDecisionRetries=1,waitPollMs=750},prior=[]) {
+  if (typeof goal !== 'string' || !goal || !Array.isArray(controls) || (!controls.length && !policy) || controls.some(control => !validateControl(control)) || !Number.isInteger(maxSteps) || maxSteps < 1 || maxSteps > 30 || !Number.isFinite(maxMs) || maxMs < 1 || maxMs > 45000 || !Number.isFinite(decisionTimeoutMs) || decisionTimeoutMs < 1000 || decisionTimeoutMs > 30000 || !Number.isInteger(maxDecisionRetries) || maxDecisionRetries < 0 || maxDecisionRetries > 2 || !Number.isFinite(waitPollMs) || waitPollMs < 100 || waitPollMs > 5000 || !Array.isArray(allowedOrigins) || !allowedOrigins.length) throw new Error('Invalid task contract');
   const history = [...prior];
   const startedAt = performance.now();
   let waits = 0;
@@ -206,7 +209,6 @@ export async function run(tab,{goal,controls=[],policy,envFile,provider,model,al
     checkState(fresh,allowedOrigins);
     if (performance.now()-startedAt >= maxMs) return result('budget',history,fresh,startedAt);
     if (fresh !== state) { history.push({...record,executed:false,reason:'stale_state'}); state=fresh; continue; }
-    if (decision.confidence < minConfidence) return result('low_confidence',[...history,record],state,startedAt);
     if (decision.choice === 'WAIT') {
       history.push({...record,executed:false,reason:'wait'});
       if (++waits >= 3) return result('loading_timeout',history,state,startedAt);
