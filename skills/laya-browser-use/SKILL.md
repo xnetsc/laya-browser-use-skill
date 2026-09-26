@@ -43,6 +43,10 @@ Before the first runtime call, verify that the two LFS-managed model objects are
 node /absolute/path/to/laya-browser-use/prepare-model.mjs --check
 ```
 
+Normal `git clone` and `git pull` leave these objects as pointers because the repository's
+`.lfsconfig` excludes model payloads by default. After download authorization, the preparer
+overrides that exclusion only for the two required model objects.
+
 If the check reports `missing`, run the same command without `--check`. In a Git checkout it tries
 only after authorization as described below. A complete model already present in the private
 browser's persistent cache is an exception: the runtime may use that cache without authorization

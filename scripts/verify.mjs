@@ -7,6 +7,7 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const skillRoot = join(projectRoot, 'skills', 'laya-browser-use');
+const lfsExclude = 'skills/laya-browser-use/runtime/models/**';
 const expectedModel = {
   bytes: 643835514,
   sha256: '9d628fd971b700382ac6f65920a86f149777b2e748e0c955fb3b19695aa8f204',
@@ -27,6 +28,11 @@ async function requireFile(relative, minimumBytes = 1) {
 
 const major = Number(process.versions.node.split('.')[0]);
 if (major < 22) throw new Error(`Node.js 22+ is required; found ${process.version}`);
+
+const lfsConfig = await readFile(join(projectRoot, '.lfsconfig'), 'utf8');
+if (!lfsConfig.includes(`fetchexclude = ${lfsExclude}`)) {
+  throw new Error(`.lfsconfig must exclude model payloads by default: ${lfsExclude}`);
+}
 
 const required = [
   ['SKILL.md', 100],

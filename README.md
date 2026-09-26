@@ -30,19 +30,26 @@ skills/laya-browser-use/
 
 A host that supports importing a skill directory can import that folder directly.
 
-To fetch the repository without transferring the two large model objects first:
+The repository excludes its LFS-managed model payloads from normal fetches. A regular clone or
+pull therefore transfers source and runtime files while leaving the two large model files as LFS
+pointers:
 
 ```sh
-GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/xnetsc/laya-browser-use-skill.git
+git clone https://github.com/xnetsc/laya-browser-use-skill.git
 cd laya-browser-use-skill
 node scripts/install.mjs --allow-local-reuse --allow-model-download
 ```
+
+The repository-level `.lfsconfig` applies the same exclusion to later `git pull` operations. Once
+model-download permission is granted, the installer explicitly overrides that exclusion for only
+the two required objects. It then prefers Git LFS and falls back to resumable HTTP if needed.
 
 The two allow flags must be passed only after the host has asked for and received permission. The
 installer first checks the temporary registry written by an existing Laya runtime. A live loopback
 server is reused without copying the model; if its HTTP endpoint is unavailable, a verified model
 directory recorded in the same marker is used directly. It does not scan ports. Only when neither
-local source exists does it try `git lfs pull`, then resumable public HTTP downloads. Downloads use
+local source exists does it explicitly fetch the two objects with `git lfs pull`, then resumable
+public HTTP downloads. Downloads use
 exact byte counts, SHA-256 verification, atomic final rename, and a persistent `.part` file.
 
 The installer defaults to the shared Agents Skills location:

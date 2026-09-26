@@ -1,0 +1,2 @@
+[lfs]
+	fetchexclude = skills/laya-browser-use/runtime/models/**
