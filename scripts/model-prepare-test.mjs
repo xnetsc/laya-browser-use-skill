@@ -5,7 +5,7 @@ import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {
-  discoverLocalModelServer, discoverLocalModelSource, downloadVerifiedFile,
+  discoverLocalModelServer, discoverLocalModelSource, downloadVerifiedFile, ensureModel,
   LOCAL_MODEL_REGISTRY, MODEL_ASSETS, modelManifest,
 } from '../skills/laya-browser-use/prepare-model.mjs';
 
@@ -70,6 +70,13 @@ try {
   const baseUrl = `http://127.0.0.1:${address.port}/`;
   await writeFile(join(registry, 'runtime.json'), JSON.stringify({...modelManifest(), baseUrl}));
   assert.equal((await discoverLocalModelServer({registry}))?.baseUrl, baseUrl);
+  const automatic = await ensureModel({
+    root: join(temporary, 'empty-skill'),
+    registry,
+    useGitLfs: false,
+    allowHttpDownload: false,
+  });
+  assert.equal(automatic.method, 'local-http');
   const staleRegistry = join(temporary, 'stale-registry');
   const fakeModelRoot = join(temporary, 'existing-model');
   await mkdir(staleRegistry);
@@ -85,7 +92,7 @@ try {
   assert.equal(LOCAL_MODEL_REGISTRY.startsWith(tmpdir()), true);
   console.log(JSON.stringify({
     status: 'model-prepare-tests-ok', resumed, localDiscovery: true,
-    filesystemFallback: true, dynamicTempDirectory: true, requests,
+    filesystemFallback: true, automaticLocalReuse: true, dynamicTempDirectory: true, requests,
   }, null, 2));
 } finally {
   await new Promise((resolvePromise) => server.close(resolvePromise));

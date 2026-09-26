@@ -42,13 +42,30 @@ try {
   assert.equal(typeof warm.result.runtimeBrowser, 'string');
   assert.equal(typeof warm.result.platform, 'string');
 
+  const scored = await request('score', {
+    state: {value: 'current input'},
+    questions: {
+      pick: {type: 'choice', instructions: 'Select one candidate.', criteria: {alpha: 'Alpha', beta: 'Beta'}},
+      truth: {type: 'noul', instructions: 'The stated condition holds.'},
+      level: {type: 'score', instructions: 'Place this on the scale.', criteria: ['low', 'medium', 'high']},
+    },
+  });
+  assert.equal(scored.ok, true, scored.error);
+  assert.equal(scored.result.answers.pick.type, 'choice');
+  assert.deepEqual(Object.keys(scored.result.answers.pick.probabilities).sort(), ['alpha', 'beta']);
+  assert.equal(scored.result.answers.truth.type, 'noul');
+  assert.equal(Number.isFinite(scored.result.answers.truth.noul), true);
+  assert.equal(scored.result.answers.level.type, 'score');
+  assert.equal(Number.isFinite(scored.result.answers.level.score), true);
+  assert.equal(scored.result.usage.questions, 3);
+
   const decision = await request('decide', {
     ...warm.result,
-    goal: 'Open settings.',
-    state: 'Browser tab: Test. URL: "https://example.com/".\n1 button Settings\n2 button Delete account',
+    goal: 'Click Alpha.',
+    state: 'Browser tab: Test. URL: "https://example.com/".\n1 button Alpha\n2 button Beta',
     actions: [
-      {op: 'click', name: 'Settings', description: 'Click Settings'},
-      {op: 'click', name: 'Delete account', description: 'Click Delete account'},
+      {op: 'click', name: 'Alpha', description: 'Click Alpha'},
+      {op: 'click', name: 'Beta', description: 'Click Beta'},
     ],
   });
   assert.equal(decision.ok, true, decision.error);

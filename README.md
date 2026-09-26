@@ -1,7 +1,12 @@
 # Laya Browser Use
 
-A portable Skills-standard package for bounded browser actions selected by a bundled local Laya
-decision model. It is not tied to one agent product or browser-control namespace.
+A portable Skills-standard package for structured decisions with a bundled local Laya model. It
+supports choosing one named option, scoring ordered levels, and estimating whether a statement is
+true from an explicit fact-only context. A browser candidate-selection adapter is included.
+
+`browser` remains in the package and skill name, but it does not limit applicability. The skill is
+recommended for every decision that fits one of the supported question types; no browser task is
+required.
 
 The project contains the checkpoint, WebGPU runtime, Chromium launcher, host-neutral module API,
 and a JSONL command interface. It uses no separately managed Laya service or remote decision
@@ -12,13 +17,12 @@ endpoint.
 - Windows, Linux, and macOS
 - Node.js 22 or newer
 - Google Chrome, Chromium, or Microsoft Edge with working WebGPU for the private model runtime
-- any Skills-compatible host that can inspect and operate a target browser page
+- any Skills-compatible host with a persistent Node.js context or shell
 - access to the default Pyodide CDN on first runtime start, or a host-provided Pyodide mirror
 - about 670 MB of installed data
 
-The target browser and private runtime browser are separate. The target may be any browser supported
-by the host's browser/computer-use tool. The private Chromium process only runs the local model and
-never opens the target site.
+The private Chromium process only runs the local model. When the optional browser adapter is used,
+the target browser remains separate.
 
 ## Import or install
 
@@ -37,19 +41,16 @@ pointers:
 ```sh
 git clone https://github.com/xnetsc/laya-browser-use-skill.git
 cd laya-browser-use-skill
-node scripts/install.mjs --allow-local-reuse --allow-model-download
+node scripts/install.mjs
 ```
 
 The repository-level `.lfsconfig` applies the same exclusion to later `git pull` operations. Once
-model-download permission is granted, the installer explicitly overrides that exclusion for only
-the two required objects. It then prefers Git LFS and falls back to resumable HTTP if needed.
-
-The two allow flags must be passed only after the host has asked for and received permission. The
-installer first checks the temporary registry written by an existing Laya runtime. A live loopback
-server is reused without copying the model; if its HTTP endpoint is unavailable, a verified model
-directory recorded in the same marker is used directly. It does not scan ports. Only when neither
-local source exists does it explicitly fetch the two objects with `git lfs pull`, then resumable
-public HTTP downloads. Downloads use
+the model is needed, the installer overrides that exclusion for only the two required objects. It
+first checks the temporary registry written by an existing Laya runtime. A live loopback server is
+reused without copying the model; if its HTTP endpoint is unavailable, a verified model directory
+recorded in the same marker is used directly. It does not scan ports. Only when neither local source
+exists does it explicitly fetch the two objects with `git lfs pull`, then resumable public HTTP
+downloads. Downloads use
 exact byte counts, SHA-256 verification, atomic final rename, and a persistent `.part` file.
 
 The installer defaults to the shared Agents Skills location:
@@ -58,9 +59,8 @@ The installer defaults to the shared Agents Skills location:
 node scripts/install.mjs
 ```
 
-The short form succeeds without authorization when the repository already contains verified model
-files. If they are absent or still LFS pointers, the installer stops and tells the host to obtain
-authorization rather than choosing a source by itself.
+The installer accepts existing verified model files or prepares them automatically when they are
+absent or still LFS pointers.
 
 Default destination: `~/.agents/skills/laya-browser-use`.
 
@@ -92,25 +92,24 @@ To install only the runtime and defer both large model objects:
 
 ```sh
 node scripts/install.mjs --defer-model
-node /absolute/path/to/installed/laya-browser-use/prepare-model.mjs --allow-local-reuse --allow-download
+node /absolute/path/to/installed/laya-browser-use/prepare-model.mjs
 ```
 
 For a manually imported skill directory, run its `prepare-model.mjs` before first use. A host can
 provide a private mirror base with `LAYA_MODEL_BASE_URL`; it must contain `model.safetensors` and
 `tokenizer/tokenizer.json` at those relative paths. The built-in sources require no credential.
-Equivalent host-controlled environment grants are `LAYA_ALLOW_LOCAL_MODEL_REUSE=1` and
-`LAYA_ALLOW_MODEL_DOWNLOAD=1`. The host must ask before setting either variable.
 
 ## Host integration
 
-The skill provides two equivalent entry points:
+The skill provides these entry points:
 
-- `bridge.mjs`: direct module API for a host with a persistent Node.js evaluation context
-- `laya-cli.mjs jsonl`: persistent stdin/stdout protocol for any host with shell access
+- `laya-local.mjs` → `localDecision({state, questions})`: generic module API
+- `laya-cli.mjs jsonl` → `score`: generic persistent stdin/stdout API
+- `bridge.mjs`: browser candidate-selection adapter
 
-Claude Code, Codex, or another host supplies the bounded goal, a fresh textual browser observation,
-the exact authorized action list, and action history. The host retains control of authorization,
-accessibility capture, clicks, scrolling, typing, screenshots, and final verification. See
+Decision state must contain explicit facts; missing or derived facts are resolved before the call.
+See [`references/decision-api.md`](skills/laya-browser-use/references/decision-api.md). For the
+optional browser adapter, see
 [`references/browser-adapters.md`](skills/laya-browser-use/references/browser-adapters.md).
 
 ## Browser runtime selection
@@ -162,11 +161,10 @@ npm run verify:cli
 
 If the model files are absent but a previous run's persistent browser cache is complete, the next
 run starts from that cache and streams the two files back to `runtime/models/laya/` with size and
-SHA-256 checks. Cache recovery does not require model-download authorization. A partial cache is
-not accepted as a model.
+SHA-256 checks. A partial cache is not accepted as a model.
 
-- `npm test` checks files, the model digest, host-neutral bridge behavior, and generated browser
-  candidates for Windows, Linux, and macOS.
+- `npm test` checks files, the model digest, structured decision interfaces, and generated runtime
+  browser candidates for Windows, Linux, and macOS.
 - `verify:runtime` loads the complete model and runs a direct module decision.
 - `verify:cli` loads the complete model through the portable JSONL protocol and runs a decision.
 

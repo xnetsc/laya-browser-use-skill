@@ -42,6 +42,7 @@ const required = [
   ['laya-page.html', 100],
   ['prepare-model.mjs', 1000],
   ['references/browser-adapters.md', 100],
+  ['references/decision-api.md', 100],
   ['references/provider-configuration.md', 100],
   ['runtime/models/laya/rl_agent_config.json', 100],
   ['runtime/models/laya/encoder/config.json', 100],
@@ -103,11 +104,11 @@ if (process.argv.includes('--runtime')) {
     const config = await bridge.loadConfig();
     const decision = await bridge.decide({
       ...config,
-      goal: 'Open settings.',
-      state: 'Browser tab: Test. URL: "https://example.com/".\n1 button Settings\n2 button Delete account',
+      goal: 'Click Alpha.',
+      state: 'Browser tab: Test. URL: "https://example.com/".\n1 button Alpha\n2 button Beta',
       actions: [
-        {op: 'click', name: 'Settings', description: 'Click Settings'},
-        {op: 'click', name: 'Delete account', description: 'Click Delete account'},
+        {op: 'click', name: 'Alpha', description: 'Click Alpha'},
+        {op: 'click', name: 'Beta', description: 'Click Beta'},
       ],
     });
     if (decision.choice !== 'a0') throw new Error(`Runtime chose the wrong action: ${decision.choice}`);

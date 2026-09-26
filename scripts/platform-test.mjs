@@ -53,15 +53,15 @@ assert.throws(
 );
 
 const actions = discoverActions(
-  'Browser tab: Test. URL: "https://example.com/".\n1 button Settings\n2 button Delete account',
-  {click: true, requireHostNames: [/delete/i]},
+  'Browser tab: Test. URL: "https://example.com/".\n1 button Primary action\n2 button Secondary action',
+  {click: true, allowNames: [/primary/i]},
 );
-assert.deepEqual(actions.map((action) => action.name), ['Settings']);
+assert.deepEqual(actions.map((action) => action.name), ['Primary action']);
 
 assert.equal(join(projectRoot, 'skills', 'laya-browser-use').endsWith('laya-browser-use'), true);
 console.log(JSON.stringify({
   status: 'platform-tests-ok',
   platforms: ['win32', 'linux', 'darwin'],
   installHosts: ['agents', 'codex', 'claude'],
-  hostPolicy: 'ok',
+  candidateFilter: 'ok',
 }, null, 2));

@@ -266,36 +266,27 @@ async function downloadAsset(root, asset, env) {
 export async function ensureModel({
   root = skillRoot,
   env = process.env,
-  allowLocalReuse = false,
+  registry = LOCAL_MODEL_REGISTRY,
   allowBrowserCache = true,
-  useGitLfs = false,
-  allowDownload = false,
-  allowHttpDownload = allowDownload,
+  useGitLfs = true,
+  allowHttpDownload = true,
 } = {}) {
   let missing = [];
   for (const asset of MODEL_ASSETS) if (!(await validAsset(root, asset))) missing.push(asset);
   if (missing.length === 0) return {status: 'ready', method: 'existing'};
 
-  // Browser-cache recovery is explicitly allowed without host authorization. Filesystem and
-  // loopback reuse remain gated by allowLocalReuse because they inspect another local instance.
-  if (allowLocalReuse || allowBrowserCache) {
-    const local = await discoverLocalModelSource({
-      allowHttp: allowLocalReuse,
-      allowFilesystem: allowLocalReuse,
-      allowBrowserCache,
-    });
-    if (local?.kind === 'http') {
-      return {status: 'ready', method: 'local-http', baseUrl: local.baseUrl, modelRoot: local.modelRoot};
-    }
-    if (local?.kind === 'filesystem') {
-      return {status: 'ready', method: 'local-files', modelRoot: local.modelRoot};
-    }
-    if (local?.kind === 'browser-cache') {
-      return {status: 'ready', method: 'browser-cache', browserProfile: local.browserProfile, baseUrl: local.baseUrl};
-    }
+  const local = await discoverLocalModelSource({registry, allowBrowserCache});
+  if (local?.kind === 'http') {
+    return {status: 'ready', method: 'local-http', baseUrl: local.baseUrl, modelRoot: local.modelRoot};
+  }
+  if (local?.kind === 'filesystem') {
+    return {status: 'ready', method: 'local-files', modelRoot: local.modelRoot};
+  }
+  if (local?.kind === 'browser-cache') {
+    return {status: 'ready', method: 'browser-cache', browserProfile: local.browserProfile, baseUrl: local.baseUrl};
   }
 
-  if (allowDownload && useGitLfs) {
+  if (useGitLfs) {
     const lfsCompleted = await tryGitLfs(root);
     missing = [];
     for (const asset of MODEL_ASSETS) if (!(await validAsset(root, asset))) missing.push(asset);
@@ -304,7 +295,7 @@ export async function ensureModel({
   }
 
   if (!allowHttpDownload) {
-    throw new Error('Model files are not ready. Host authorization is required before checking a local model runtime or downloading model files.');
+    throw new Error('Git LFS did not materialize every required model file and HTTP fallback is disabled.');
   }
   for (const asset of missing) await downloadAsset(root, asset, env);
   return {status: 'ready', method: 'resumable-download'};
@@ -314,18 +305,11 @@ async function main() {
   const args = process.argv.slice(2);
   const checkOnly = args.includes('--check');
   const lfsOnly = args.includes('--lfs-only');
-  const allowLocalReuse = args.includes('--allow-local-reuse')
-    || process.env.LAYA_ALLOW_LOCAL_MODEL_REUSE === '1';
-  const allowDownload = args.includes('--allow-download')
-    || lfsOnly
-    || process.env.LAYA_ALLOW_MODEL_DOWNLOAD === '1';
   const result = checkOnly
     ? {status: (await Promise.all(MODEL_ASSETS.map((asset) => validAsset(skillRoot, asset)))).every(Boolean) ? 'ready' : 'missing', method: 'check'}
     : await ensureModel({
-      allowLocalReuse,
       useGitLfs: !args.includes('--no-lfs'),
-      allowDownload,
-      allowHttpDownload: allowDownload && !lfsOnly,
+      allowHttpDownload: !lfsOnly,
     });
   console.log(JSON.stringify(result, null, 2));
   if (result.status !== 'ready') process.exitCode = 1;

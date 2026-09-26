@@ -1,5 +1,8 @@
 # Browser host adapters
 
+Use this adapter only after constructing a fresh accessibility state made of directly observed
+facts. Resolve any missing or derived information before asking Laya to select a candidate action.
+
 The skill does not assume a particular agent product or browser-control namespace. The target page
 stays in the browser tool supplied by the host. The private Chromium process started by
 `laya-local.mjs` is only the local model runtime and never opens the target site.
@@ -15,8 +18,7 @@ an adapter with these asynchronous methods:
 - `pressKey(target, key)`: send a supported navigation key
 - `reload()`: reload the current page
 
-The host owns browser selection, authorization, screenshots, text entry, and final verification.
-Translate its native browser calls into the adapter without opening a second target browser.
+Translate the host's native browser calls into the adapter without opening a second target browser.
 
 Claude Code, Codex, and other Skills-compatible hosts use this same contract. Product-specific tool
 names belong in the host-side adapter or orchestration loop, not in this skill's model runtime.
@@ -42,7 +44,7 @@ Warm the runtime:
 Request a decision after the host has observed the page and constructed a bounded action list:
 
 ```json
-{"id":"2","op":"decide","payload":{"goal":"Open settings","state":"Browser tab: Example. URL: \"https://example.com/\".\n1 button Settings","actions":[{"op":"click","name":"Settings","description":"Click Settings"}],"history":[]}}
+{"id":"2","op":"decide","payload":{"goal":"Advance the current goal","state":"Browser tab: Example. URL: \"https://example.com/\".\n1 button Primary action","actions":[{"op":"click","name":"Primary action","description":"Click Primary action"}],"history":[]}}
 ```
 
 The response contains `result.action`; execute that action with the host browser tool, observe fresh
@@ -61,9 +63,9 @@ state to disk.
 `bridge.mjs` currently recognizes lines shaped like:
 
 ```text
-12 button Settings
-13 link Documentation
-14 text field Search
+12 button Primary action
+13 link Secondary action
+14 text field Input
 ```
 
 If the host uses another accessibility representation, normalize it to this form before calling

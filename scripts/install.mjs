@@ -30,10 +30,6 @@ const target = resolveInstallTarget({host, target: explicitTarget});
 const force = args.includes('--force');
 const dryRun = args.includes('--dry-run');
 const deferModel = args.includes('--defer-model');
-const allowLocalReuse = args.includes('--allow-local-reuse')
-  || process.env.LAYA_ALLOW_LOCAL_MODEL_REUSE === '1';
-const allowModelDownload = args.includes('--allow-model-download')
-  || process.env.LAYA_ALLOW_MODEL_DOWNLOAD === '1';
 
 if (basename(target) !== 'laya-browser-use') {
   throw new Error('Install target must end with laya-browser-use');
@@ -46,6 +42,7 @@ for (const relative of [
   'laya-local.mjs',
   'laya-page.html',
   'prepare-model.mjs',
+  'references/decision-api.md',
   'runtime/models/laya/rl_agent_config.json',
   'runtime/models/laya/encoder/config.json',
   'runtime/models/laya/tokenizer/tokenizer_config.json',
@@ -65,9 +62,7 @@ let modelPreparation = null;
 if (!dryRun && !deferModel) {
   modelPreparation = await ensureModel({
     root: source,
-    allowLocalReuse,
     useGitLfs: true,
-    allowDownload: allowModelDownload,
   });
   console.log(`Model preparation: ${modelPreparation.method}`);
 }
@@ -110,9 +105,8 @@ if (deferModel) {
 } else if (['local-http', 'local-files', 'browser-cache'].includes(modelPreparation?.method)) {
   const sourceLabel = modelPreparation.method === 'browser-cache'
     ? 'a reusable browser cache is available'
-    : 'an authorized local model source is available';
+    : 'a reusable local model source is available';
   console.log(`Installed laya-browser-use without copying model files; ${sourceLabel}.`);
-  console.log('Browser-cache recovery needs no authorization. Keep LAYA_ALLOW_LOCAL_MODEL_REUSE=1 for loopback/filesystem reuse. Set LAYA_ALLOW_MODEL_DOWNLOAD=1 only after download is authorized.');
 } else {
   console.log('Installed laya-browser-use. Reload or restart the Skills host before using it.');
 }

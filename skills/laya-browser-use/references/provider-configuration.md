@@ -5,9 +5,9 @@ one-time preparation operation; inference remains local afterward.
 
 ## Installed components
 
-- `bridge.mjs`: host-neutral action loop, decision API, and result validation
+- `laya-local.mjs`: generic decision API and private Chromium lifecycle
 - `laya-cli.mjs`: portable JSONL and one-shot command interface
-- `laya-local.mjs`: private Chromium lifecycle and local inference bridge
+- `bridge.mjs`: browser candidate-selection adapter
 - `laya-page.html`: WebGPU model host page
 - `prepare-model.mjs`: Git-LFS-first model materializer with verified resumable fallback
 - `runtime/models/laya/`: `convaiinnovations/laya-multilingual` checkpoint, bundled or prepared later
@@ -28,20 +28,16 @@ optional ONNX Vision worker or its tokenizer dependencies.
 
 ## Model preparation
 
-The checkpoint and tokenizer are Git LFS objects. A repository host can first clone only ordinary
-files with `GIT_LFS_SKIP_SMUDGE=1`, then run `node scripts/install.mjs --allow-local-reuse
---allow-model-download` after host authorization; the installer asks Git LFS for the exact two model
-paths before copying the skill. A directly imported or deferred skill can
-run:
+The checkpoint and tokenizer are Git LFS objects. The repository's `.lfsconfig` leaves them as
+pointers during normal clone and pull operations. Run `node scripts/install.mjs`; the installer asks
+Git LFS for the exact two model paths before copying the skill. A directly imported or deferred
+skill can run:
 
 ```sh
 node /absolute/path/to/laya-browser-use/prepare-model.mjs
 ```
 
-The host must ask before enabling local reuse or any download. After authorization, pass
-`--allow-local-reuse` and/or `--allow-download`, or set the corresponding
-`LAYA_ALLOW_LOCAL_MODEL_REUSE=1` and `LAYA_ALLOW_MODEL_DOWNLOAD=1` environment variables. The
-preparer uses this order:
+The preparer uses this order:
 
 1. accept existing files only when their byte counts and SHA-256 digests match;
 2. inspect exact loopback addresses registered by running Laya instances, without scanning ports;
@@ -52,8 +48,8 @@ preparer uses this order:
 6. move each `.part` file into place only after full digest verification.
 
 Set `LAYA_MODEL_BASE_URL` to put a host-owned mirror before the built-in sources. Its layout must be
-`model.safetensors` and `tokenizer/tokenizer.json`. Re-running the command is safe and resumes an
-interrupted `.part` file. `--check` performs no download; `--lfs-only` forbids HTTP fallback; and
+`model.safetensors` and `tokenizer/tokenizer.json`. Re-running the command resumes an interrupted
+`.part` file. `--check` performs no download; `--lfs-only` forbids HTTP fallback; and
 `--no-lfs` skips the Git LFS attempt.
 
 Every runtime that serves verified local files writes a manifest marker beneath the operating
@@ -62,10 +58,10 @@ the model manifest, exact `127.0.0.1` URL, absolute model directory, and persist
 path.
 It remains useful after the process exits: a later instance rejects the dead HTTP endpoint, checks
 the recorded files by size and SHA-256, and serves that directory itself. If a reused HTTP endpoint
-dies during loading, the same filesystem check happens before any authorized download fallback.
+dies during loading, the same filesystem and browser-cache checks happen before download fallback.
 If the files are gone but the persistent profile still has complete IndexedDB chunks, startup binds
 the recorded fixed port, exports those chunks, verifies both hashes, and restores the files before
-loading. Cache recovery is local and needs no download authorization; incomplete chunks are rejected.
+loading. Incomplete chunks are rejected.
 
 ## Browser selection
 
@@ -105,7 +101,7 @@ An invalid explicit path fails immediately; it never silently falls back to a di
 
 ## Verification
 
-Import `bridge.mjs` and call `loadConfig()`, or send `{"op":"warm"}` to the JSONL CLI. A healthy
+Import `laya-local.mjs` and call `warmLocalDecision()`, or send `{"op":"warm"}` to the JSONL CLI. A healthy
 result reports:
 
 - provider: `laya-local`
@@ -113,8 +109,8 @@ result reports:
 - backend: `webgpu`
 - the selected runtime browser and operating system
 
-Then call `decide()` with a synthetic state and a small action list. The result must contain a
-supplied choice, finite confidence, and probabilities summing to approximately one.
+Then call `localDecision()` or send `{"op":"score"}` with a fact-only state and `choice`, `score`,
+and `noul` questions. The result must preserve every question id and return finite distributions.
 
 ## Updating the local runtime
 

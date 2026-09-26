@@ -395,22 +395,12 @@ async function startRuntimeOnce({
   }
 }
 
-function permission(name) {
-  return process.env[name] === '1';
-}
-
 async function startRuntime() {
   if (await localModelReady()) {
     return await startRuntimeOnce({browserProfile: profileFor(MODEL)});
   }
 
-  const allowLocalReuse = permission('LAYA_ALLOW_LOCAL_MODEL_REUSE');
-  const allowDownload = permission('LAYA_ALLOW_MODEL_DOWNLOAD');
-  let local = await discoverLocalModelSource({
-    allowHttp: allowLocalReuse,
-    allowFilesystem: allowLocalReuse,
-    allowBrowserCache: true,
-  });
+  let local = await discoverLocalModelSource();
   if (local?.kind === 'filesystem') {
     return await startRuntimeOnce({
       modelRoot: local.modelRoot,
@@ -426,10 +416,8 @@ async function startRuntime() {
         preferredPort,
         recoverCache: true,
       });
-    } catch (cacheError) {
+    } catch {
       const replacement = await discoverLocalModelSource({
-        allowHttp: allowLocalReuse,
-        allowFilesystem: allowLocalReuse,
         allowBrowserCache: true,
       });
       if (replacement?.kind === 'filesystem') {
@@ -438,17 +426,15 @@ async function startRuntime() {
           browserProfile: replacement.browserProfile || profileFor(replacement.modelRoot),
         });
       }
-      if (!allowDownload) throw cacheError;
-      local = null;
+      local = replacement?.kind === 'http' ? replacement : null;
     }
   }
   if (local?.kind === 'http') {
     try {
       return await startRuntimeOnce({modelBaseUrl: local.baseUrl, preferredPort: PROXY_PORT});
-    } catch (firstError) {
+    } catch {
       const replacement = await discoverLocalModelSource({
-        allowHttp: allowLocalReuse,
-        allowFilesystem: allowLocalReuse,
+        allowHttp: false,
         allowBrowserCache: true,
       });
       if (replacement?.kind === 'filesystem') {
@@ -457,23 +443,24 @@ async function startRuntime() {
           browserProfile: replacement.browserProfile || profileFor(replacement.modelRoot),
         });
       }
-      if (replacement?.kind === 'http' && replacement.baseUrl !== local.baseUrl) {
+      if (replacement?.kind === 'browser-cache') {
         try {
-          return await startRuntimeOnce({modelBaseUrl: replacement.baseUrl, preferredPort: PROXY_PORT});
+          const preferredPort = Number(new URL(replacement.baseUrl).port) || RUNTIME_PORT;
+          return await startRuntimeOnce({
+            modelRoot: MODEL,
+            browserProfile: replacement.browserProfile,
+            preferredPort,
+            recoverCache: true,
+          });
         } catch {
           local = null;
         }
-      } else {
-        local = replacement;
       }
-      if (local || !allowDownload) throw firstError;
+      local = null;
     }
   }
 
-  if (!allowDownload) {
-    throw new Error('No usable local model is available. Ask the host for authorization before setting LAYA_ALLOW_MODEL_DOWNLOAD=1.');
-  }
-  await ensureModel({root: ROOT, allowBrowserCache: false, useGitLfs: true, allowDownload: true});
+  await ensureModel({root: ROOT, allowBrowserCache: false, useGitLfs: true});
   return await startRuntimeOnce({browserProfile: profileFor(MODEL)});
 }
 
