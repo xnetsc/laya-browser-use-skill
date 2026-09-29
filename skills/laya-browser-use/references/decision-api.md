@@ -50,7 +50,8 @@ not already known, resolve it outside the interface before submitting the questi
 request so the runtime can share encoder work.
 
 - `choice`: `criteria` is an object or list of named options. The answer contains `choice`,
-  `probabilities`, and `confidence`.
+  `probabilities`, `answer_confidence` (`max(probabilities)`, the calibration quantity), and
+  `confidence` (legacy distribution concentration).
 - `score`: `criteria` is an ordered list of levels. The answer contains the expected numeric
   `score`, the probability distribution, and a `legend`.
 - `noul`: `instructions` is the statement being evaluated. Optional `criteria.false` and
@@ -107,6 +108,21 @@ Warm it once, then send `score` requests:
 
 The response preserves each question id under `result.answers` and reports shared execution data
 under `result.usage`.
+
+The optional browser adapter is intentionally not a transparent pass-through. The bundled legacy
+checkpoint can reverse its choice when only the option order changes, with no external truth telling
+the adapter which order is right. The adapter therefore evaluates forward and reverse order and
+averages by stable label. This symmetric ensemble is reasonable for choosing an action, but it is a
+new predictor and does not inherit either component's probability calibration. Its result includes:
+
+- `confidenceKind: "top-two-share"`: a candidate-count-resistant decision margin;
+- `probabilitiesCalibrated: false`: the averaged distribution has not been calibrated separately;
+- `orderConsistent`: whether both orderings chose the same label;
+- `components`: both untouched component distributions and their `answerConfidence` calibration quantities.
+
+Do not compare the adapter's aggregate `confidence` with thresholds calibrated for
+`answer_confidence`. If an application needs a correctness probability for the ensemble, fit and
+validate that ensemble on held-out adapter decisions.
 
 ## Persistent HTTP service
 

@@ -58,6 +58,11 @@ this skill.
   means the state is incomplete or ambiguous; the host may add facts and retry, or explicitly accept
   the result according to its own policy. This skill does not impose a confidence threshold or block
   a result.
+- The generic scorer returns `answer_confidence = max(probabilities)`, the quantity fitted by
+  temperature scaling. The browser adapter is different: it averages forward/reverse option-order
+  distributions to reduce the bundled checkpoint's position bias and reports a top-two decision
+  margin. Its `probabilitiesCalibrated` is therefore `false`; inspect its preserved `components`
+  instead of treating the aggregate `confidence` as a calibrated success probability.
 
 ## Choose an integration mode
 
@@ -144,7 +149,8 @@ At service startup, the published WebPyTorch and model manifests are checked. Ru
 files are prepared and verified in staging directories. All changed directories are switched in one
 transaction; a failed update leaves the old runtime and model active. A successful model update
 deletes the old local model and browser cache only after the new model is verified, then restarts the
-service and browser.
+service and browser. Runtime manifests carry a monotonic `runtimeVersion`; never replace an installed
+runtime with a lower version or a different commit claiming the same version.
 
 ## Decision sequence
 

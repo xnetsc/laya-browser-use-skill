@@ -124,4 +124,6 @@ switches `runtime/webtorch/` and `runtime/models/laya/` as one transaction. It n
 file from a multi-file revision while leaving its siblings at the old revision. A failed download or
 switch leaves the old runtime and model active; old model files and the browser cache are removed
 only after the complete new model has been activated. A successful model switch restarts the
-service/browser so the new manifest is loaded. Run a real local decision after an update.
+service/browser so the new manifest is loaded. `runtimeVersion` is monotonic: a lower remote version,
+a legacy unversioned manifest seen by a versioned installation, or a different commit claiming the
+same version is rejected as a runtime rollback. Run a real local decision after an update.

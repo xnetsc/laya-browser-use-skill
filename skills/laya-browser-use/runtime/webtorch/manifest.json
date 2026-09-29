@@ -1,9 +1,10 @@
 {
   "protocol": 1,
+  "runtimeVersion": 238,
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "22354cc5c9aa71edbe50ef117e0d282e2c32c7fb"
+    "commit": "46654e8ac06c3382a76c5a76a60974289e421199"
   },
   "files": [
     {
@@ -88,8 +89,8 @@
     },
     {
       "path": "webtorch/__init__.py",
-      "bytes": 8509,
-      "sha256": "10340e81495e381ff40525d4e77bd8b74940180759a526a399317d5ef16214b7"
+      "bytes": 8549,
+      "sha256": "796f2b80aecb6110d23cb121749df61ce55161aa75244c9efb2e9a605be090ad"
     },
     {
       "path": "webtorch/_core.py",
@@ -128,8 +129,8 @@
     },
     {
       "path": "webtorch/decision.py",
-      "bytes": 40517,
-      "sha256": "0aca5b85f5d5120b9dd37835574de055bc4999ac328ed155544b6f40baaa39b6"
+      "bytes": 41396,
+      "sha256": "e50e9721b9381886310b169c2879a1ecbcc4ad5972aa6f3133c547631f2c2b03"
     },
     {
       "path": "webtorch/detection.py",
@@ -158,8 +159,8 @@
     },
     {
       "path": "webtorch/js/decision-vision-runtime.js",
-      "bytes": 13863,
-      "sha256": "ae5c88da969aa6a6c570e7255aa79c7c6798f57465bd023abb3a1aa575480c9f"
+      "bytes": 14348,
+      "sha256": "4a14723e5f3dec803d6d691f7f409905a1fb107c21c0ba18e869ff7155be2028"
     },
     {
       "path": "webtorch/js/decision-vision-worker.js",
@@ -168,8 +169,8 @@
     },
     {
       "path": "webtorch/js/decision-vision.js",
-      "bytes": 9205,
-      "sha256": "db4d0c66b079bd2320cc19a8051cf9db20ea65226efee184331e4709de7ee33e"
+      "bytes": 9226,
+      "sha256": "589d97e40a0c17df326827f648bacd00a80121379144c3bd2246e0a2cbe8d5ee"
     },
     {
       "path": "webtorch/js/webtorch-coi.js",

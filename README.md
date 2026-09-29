@@ -116,6 +116,14 @@ and supplied in the state. The host must inspect each answer together with its p
 distribution and confidence. Low confidence commonly means the state is incomplete or ambiguous;
 the host may add facts and retry, or explicitly accept the result according to its own policy. The
 skill does not impose a threshold or block a result.
+
+The browser adapter deliberately asks the same choice in forward and reverse option order because
+the bundled legacy checkpoint is position-sensitive and either ordering may win. It averages the two
+distributions symmetrically for the final choice and reports a top-two margin as `confidence`. That
+aggregate is an ensemble score, not a second calibrated model probability:
+`probabilitiesCalibrated` is `false`, `confidenceKind` is `top-two-share`, and `components` preserves
+both original temperature-scaled distributions and their `answerConfidence` values. Calibrate the ensemble
+separately on held-out adapter decisions before applying an accuracy threshold to it.
 Do not treat names, URLs, or platform labels as type facts. A list containing `GitHub` and `Hugging
 Face` does not by itself answer “which is the code repository”; the host must first supply facts
 such as `GitHub is a source-code repository` and `Hugging Face is a model repository`. Then ask
@@ -146,7 +154,9 @@ runtime is downloaded into a staging directory, verified, switched atomically, a
 restarted. A changed model is first fully downloaded and verified; only then are the old model
 directory and browser cache removed and the new model activated. All changed directories switch in
 one transaction; a failed switch rolls back. Failed checks leave the current runtime and model in
-place.
+place. The runtime manifest carries a monotonic `runtimeVersion`; automatic updates accept only a
+higher version (or repair the same version at the same commit), so a stale published manifest cannot
+downgrade a newer bundled or installed runtime.
 
 ## Browser runtime selection
 

@@ -48,6 +48,7 @@ try {
   assert.equal((await readFile(join(target, 'UPSTREAM_SHA'), 'utf8')).trim(), firstCommit);
   const manifest = JSON.parse(await readFile(join(target, 'manifest.json'), 'utf8'));
   assert.equal(manifest.files.length, files.length);
+  assert.equal(Number.isSafeInteger(manifest.runtimeVersion), true);
   await assert.rejects(readFile(join(target, 'stale.txt')));
 
   const current = await syncWebpytorch({upstream, target, check: true});

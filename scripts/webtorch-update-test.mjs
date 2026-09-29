@@ -43,9 +43,10 @@ function sha(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
 }
 
-function runtimeManifest(commit, values) {
+function runtimeManifest(commit, values, runtimeVersion) {
   return {
     protocol: 1,
+    runtimeVersion,
     upstream: {repository: 'https://github.com/xnetsc/webpytorch.git', ref: 'main', commit},
     files: [...values].map(([path, bytes]) => ({path, bytes: bytes.length, sha256: sha(bytes)})),
   };
@@ -108,8 +109,8 @@ try {
   });
   await new Promise((resolvePromise) => server.listen(0, '127.0.0.1', resolvePromise));
   const base = `http://127.0.0.1:${server.address().port}`;
-  const oldRuntime = runtimeManifest('1'.repeat(40), oldRuntimeFiles);
-  const remoteRuntime = runtimeManifest('2'.repeat(40), runtimeFiles);
+  const oldRuntime = runtimeManifest('1'.repeat(40), oldRuntimeFiles, 100);
+  let remoteRuntime = runtimeManifest('2'.repeat(40), runtimeFiles, 200);
   const oldModel = modelManifest('old-model', oldModelFiles, oldSupportFiles, [`${base}/assets/`]);
   const remoteModel = modelManifest('new-model', modelFiles, supportFiles, [`${base}/assets/`]);
   await seed(join(skillRoot, 'runtime', 'webtorch'), oldRuntime, oldRuntimeFiles);
@@ -154,6 +155,29 @@ try {
     log: () => {},
   });
   assert.equal(current.status, 'current');
+
+  remoteRuntime = oldRuntime;
+  const noDowngrade = await updateWebtorchRuntime({
+    skillRoot,
+    manifestUrl: `${base}/runtime/manifest.json`,
+    modelManifestUrl: `${base}/model/manifest.json`,
+    log: () => {},
+  });
+  assert.equal(noDowngrade.status, 'current');
+  assert.equal(noDowngrade.remoteRuntimeOlder, true);
+  assert.equal(noDowngrade.commit, '2'.repeat(40));
+  assert.deepEqual(await readFile(join(skillRoot, 'runtime/webtorch/dist/wgpy-main.js')), runtimeFiles.get('dist/wgpy-main.js'));
+
+  remoteRuntime = runtimeManifest('3'.repeat(40), oldRuntimeFiles, 200);
+  const noSidegrade = await updateWebtorchRuntime({
+    skillRoot,
+    manifestUrl: `${base}/runtime/manifest.json`,
+    modelManifestUrl: `${base}/model/manifest.json`,
+    log: () => {},
+  });
+  assert.equal(noSidegrade.status, 'current');
+  assert.equal(noSidegrade.runtimeVersionConflict, true);
+  assert.equal(noSidegrade.commit, '2'.repeat(40));
   console.log(JSON.stringify({status: 'webtorch-update-tests-ok', atomicModelSwitch: true}, null, 2));
 } finally {
   await new Promise((resolvePromise) => server?.close(resolvePromise));

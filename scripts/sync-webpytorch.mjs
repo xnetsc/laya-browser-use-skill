@@ -118,6 +118,10 @@ export async function syncWebpytorch({upstream, target = defaultTarget, check = 
 
   const dependencyCommit = git(upstream, ['log', '-1', '--format=%H', '--', ...managedPaths]).trim();
   if (!/^[0-9a-f]{40}$/.test(dependencyCommit)) throw new Error('Cannot resolve the WebPyTorch dependency commit.');
+  const runtimeVersion = Number(git(upstream, ['rev-list', '--count', dependencyCommit, '--', ...managedPaths]));
+  if (!Number.isSafeInteger(runtimeVersion) || runtimeVersion < 1) {
+    throw new Error('Cannot resolve the WebPyTorch runtime version.');
+  }
   const staged = await mkdtemp(join(dirname(target), '.webpytorch-sync-'));
   try {
     const manifestFiles = [];
@@ -132,6 +136,7 @@ export async function syncWebpytorch({upstream, target = defaultTarget, check = 
     }
     const manifest = {
       protocol: 1,
+      runtimeVersion,
       upstream: {
         repository: 'https://github.com/xnetsc/webpytorch.git',
         ref: 'main',

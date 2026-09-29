@@ -34,6 +34,10 @@ function validateManifest(value) {
   if (value?.protocol !== 1 || !Array.isArray(value.files) || !value.files.length || value.files.length > 500) {
     throw new Error('Invalid WebPyTorch runtime manifest.');
   }
+  if (value.runtimeVersion !== undefined
+      && (!Number.isSafeInteger(value.runtimeVersion) || value.runtimeVersion < 1)) {
+    throw new Error('Invalid WebPyTorch runtime version.');
+  }
   if (!/^[0-9a-f]{40}$/.test(String(value.upstream?.commit || ''))) {
     throw new Error('Invalid WebPyTorch runtime commit.');
   }
@@ -115,6 +119,23 @@ async function localIsCurrent(root, remote) {
     if (!(await validFile(join(root, file.path), file))) return false;
   }
   return true;
+}
+
+async function readLocalManifest(root) {
+  try {
+    return validateManifest(JSON.parse(await readFile(join(root, 'manifest.json'), 'utf8')));
+  } catch {
+    return null;
+  }
+}
+
+function runtimeUpdateDisposition(local, remote) {
+  const localVersion = local?.runtimeVersion;
+  const remoteVersion = remote?.runtimeVersion;
+  if (!Number.isSafeInteger(localVersion)) return 'allow';
+  if (!Number.isSafeInteger(remoteVersion) || remoteVersion < localVersion) return 'older';
+  if (remoteVersion === localVersion && remote.upstream.commit !== local.upstream.commit) return 'conflict';
+  return 'allow';
 }
 
 async function fetchWithTimeout(fetchImpl, url, timeoutMs) {
@@ -305,9 +326,23 @@ export async function updateWebtorchRuntime({
     localModel = validateModelManifest(JSON.parse(await readFile(modelManifestPath, 'utf8')));
   } catch {}
   const modelChanged = JSON.stringify(localModel) !== JSON.stringify(remoteModel);
-  const runtimeChanged = !(await localIsCurrent(target, remote));
+  const localRuntime = await readLocalManifest(target);
+  // Automatic updates are mandatory, but they must be monotonic. During publication propagation
+  // the installed package can already contain a newer runtime than the raw manifest endpoint.
+  // Keep checking and updating the model, but never replace that runtime with an older commit.
+  const runtimeDisposition = runtimeUpdateDisposition(localRuntime, remote);
+  if (runtimeDisposition === 'older') {
+    log(`remote runtime version ${remote.runtimeVersion ?? 'legacy'} is older than installed ${localRuntime.runtimeVersion}; keeping the installed runtime`);
+  } else if (runtimeDisposition === 'conflict') {
+    log(`remote runtime version ${remote.runtimeVersion} names a different commit; keeping the installed runtime`);
+  }
+  const runtimeChanged = runtimeDisposition === 'allow' && !(await localIsCurrent(target, remote));
   if (!modelChanged && !runtimeChanged) {
-    return {status: 'current', commit: remote.upstream.commit, files: remote.files.length};
+    return {status: 'current', commit: localRuntime?.upstream?.commit || remote.upstream.commit,
+      runtimeVersion: (localRuntime || remote).runtimeVersion,
+      files: (localRuntime || remote).files.length,
+      remoteRuntimeOlder: runtimeDisposition === 'older',
+      runtimeVersionConflict: runtimeDisposition === 'conflict'};
   }
 
   let stagedRuntime = null;
@@ -362,13 +397,17 @@ export async function updateWebtorchRuntime({
     if (modelChanged) {
       await rm(MODEL_REGISTRY, {recursive: true, force: true});
     }
-    log(`updated dependencies at WebPyTorch ${remote.upstream.commit.slice(0, 12)}`);
+    const appliedRuntime = runtimeChanged ? remote : localRuntime;
+    log(`updated dependencies at WebPyTorch ${appliedRuntime.upstream.commit.slice(0, 12)}`);
     return {
       status: 'updated',
-      commit: remote.upstream.commit,
-      files: remote.files.length,
+      commit: appliedRuntime.upstream.commit,
+      runtimeVersion: appliedRuntime.runtimeVersion,
+      files: appliedRuntime.files.length,
       modelUpdated: modelChanged,
       requiresProcessRestart: modelChanged,
+      remoteRuntimeOlder: runtimeDisposition === 'older',
+      runtimeVersionConflict: runtimeDisposition === 'conflict',
     };
   } catch (error) {
     if (stagedRuntime) await rm(stagedRuntime, {recursive: true, force: true}).catch(() => {});

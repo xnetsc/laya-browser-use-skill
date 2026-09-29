@@ -63,6 +63,30 @@ function description(control) {
   return `Click ${control.name}`;
 }
 
+export function combineOrderBalancedAnswers(rows, labels) {
+  if (rows.length !== 2) throw new Error('Invalid local Laya decision schema');
+  const components = rows.map((answer, index) => {
+    const probabilities = answer?.probabilities;
+    if (answer?.type !== 'choice' || !probabilities || Object.keys(probabilities).sort().join('|') !== labels.join('|') || Object.values(probabilities).some(value => !Number.isFinite(value) || value < 0 || value > 1) || Math.abs(Object.values(probabilities).reduce((a,b) => a+b,0)-1) > 0.02) throw new Error('Invalid local Laya decision schema');
+    const winner = labels.reduce((best,label) => probabilities[label] > probabilities[best] ? label : best, labels[0]);
+    const answerConfidence = Number.isFinite(answer.answer_confidence)
+      ? answer.answer_confidence : Math.max(...Object.values(probabilities));
+    return {order:index === 0 ? 'forward' : 'reverse',choice:winner,
+      probabilities:{...probabilities},answerConfidence};
+  });
+  const probabilities = Object.fromEntries(labels.map(label => [label,
+    rows.reduce((sum,answer) => sum + answer.probabilities[label], 0) / rows.length]));
+  const choice = labels.reduce((best,label) => probabilities[label] > probabilities[best] ? label : best, labels[0]);
+  const ranked = Object.values(probabilities).sort((a,b) => b-a);
+  // This is a decision-margin score, not a calibrated probability of correctness. Averaging the
+  // two temperature-scaled component distributions is a deliberate permutation ensemble that cancels the
+  // old checkpoint's option-position bias, but the ensemble needs its own held-out calibration.
+  const confidence = ranked[0] / Math.max(Number.EPSILON, ranked[0] + (ranked[1] ?? 0));
+  return {choice,confidence,probabilities,confidenceKind:'top-two-share',
+    probabilitiesCalibrated:false,orderConsistent:components[0].choice === components[1].choice,
+    components};
+}
+
 export async function decide({provider=LOCAL_PROVIDER,model=LOCAL_MODEL,goal,state,actions,history=[]}) {
   if (provider !== LOCAL_PROVIDER) throw new Error('Unsupported decision provider');
   if (model !== LOCAL_MODEL) throw new Error('Unsupported local decision model');
@@ -78,23 +102,11 @@ export async function decide({provider=LOCAL_PROVIDER,model=LOCAL_MODEL,goal,sta
   const result = await localDecision({state:{goal,browser:state,history},questions});
   if (result.model !== LOCAL_MODEL) throw new Error('Invalid local Laya decision model');
   const labels = Object.keys(criteria).sort();
-  const rows = Object.values(result.answers ?? {});
-  if (rows.length !== 2) throw new Error('Invalid local Laya decision schema');
-  for (const answer of rows) {
-    const probabilities = answer?.probabilities;
-    if (answer?.type !== 'choice' || !probabilities || Object.keys(probabilities).sort().join('|') !== labels.join('|') || Object.values(probabilities).some(value => !Number.isFinite(value) || value < 0 || value > 1) || Math.abs(Object.values(probabilities).reduce((a,b) => a+b,0)-1) > 0.02) throw new Error('Invalid local Laya decision schema');
-  }
-  const probabilities = Object.fromEntries(labels.map(label => [label,
-    rows.reduce((sum,answer) => sum + answer.probabilities[label], 0) / rows.length]));
-  const choice = labels.reduce((best,label) => probabilities[label] > probabilities[best] ? label : best, labels[0]);
-  const ranked = Object.values(probabilities).sort((a,b) => b-a);
-  // Report the winner's share of the top-two mass so the host can apply its own confidence policy
-  // when the candidate count changes.
-  const confidence = ranked[0] / Math.max(Number.EPSILON, ranked[0] + (ranked[1] ?? 0));
+  const combined = combineOrderBalancedAnswers(Object.values(result.answers ?? {}), labels);
   return {
-    provider, choice, confidence, probabilities, model: result.model,
+    provider, ...combined, model: result.model,
     apiMs: Math.round(performance.now()-startedAt),
-    action: choice.startsWith('a') ? actions[Number(choice.slice(1))] : null,
+    action: combined.choice.startsWith('a') ? actions[Number(combined.choice.slice(1))] : null,
   };
 }
 
@@ -204,7 +216,10 @@ export async function run(tab,{goal,controls=[],policy,envFile,provider,model,al
       return result('decision_error',history,state,startedAt,{error:error instanceof Error ? error.message : 'Decision failed'});
     }
     decisionRetries = 0;
-    const record = {provider:decision.provider,choice:decision.choice,confidence:decision.confidence,model:decision.model,apiMs:decision.apiMs,action:decision.action?.description ?? decision.choice};
+    const record = {provider:decision.provider,choice:decision.choice,confidence:decision.confidence,
+      confidenceKind:decision.confidenceKind,probabilitiesCalibrated:decision.probabilitiesCalibrated,
+      orderConsistent:decision.orderConsistent,model:decision.model,apiMs:decision.apiMs,
+      action:decision.action?.description ?? decision.choice};
     const fresh = await tab.getAXState({emit:false,disableDiffing:true});
     checkState(fresh,allowedOrigins);
     if (performance.now()-startedAt >= maxMs) return result('budget',history,fresh,startedAt);
