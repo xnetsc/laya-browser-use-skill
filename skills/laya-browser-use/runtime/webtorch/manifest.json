@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "46654e8ac06c3382a76c5a76a60974289e421199"
+    "commit": "6f6f56974f2b25b885faa270d8a1a0563ae0ed92"
   },
   "files": [
     {
@@ -89,8 +89,8 @@
     },
     {
       "path": "webtorch/__init__.py",
-      "bytes": 8549,
-      "sha256": "796f2b80aecb6110d23cb121749df61ce55161aa75244c9efb2e9a605be090ad"
+      "bytes": 8581,
+      "sha256": "5e271ded4d2cbd20dc9bc7b29ab1527e5b5ece38ecdb9ddb5de525a17d9c6e03"
     },
     {
       "path": "webtorch/_core.py",
@@ -129,8 +129,8 @@
     },
     {
       "path": "webtorch/decision.py",
-      "bytes": 41396,
-      "sha256": "e50e9721b9381886310b169c2879a1ecbcc4ad5972aa6f3133c547631f2c2b03"
+      "bytes": 44507,
+      "sha256": "cd67f11a59a6c255137982b16666f06bd3a3dfba9d7e6e8e4bd22a7d2ac201e2"
     },
     {
       "path": "webtorch/detection.py",
@@ -259,8 +259,8 @@
     },
     {
       "path": "webtorch/webio.py",
-      "bytes": 107995,
-      "sha256": "5a130a0af6b5320cb46b827f0db3863ed8d852a44b9b889a0e9ba250cd082f4b"
+      "bytes": 114638,
+      "sha256": "cf53b54a0661d095c906722006231e13ebb727e9ab579f91001990f88342b5d0"
     }
   ]
 }
