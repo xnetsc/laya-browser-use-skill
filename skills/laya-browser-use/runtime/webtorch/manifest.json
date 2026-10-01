@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "e84432d85338f0b8de99192dd0ca0f824e2d8c1a"
+    "commit": "b18d801f971eed5e0fffec8aae42894af0e3b307"
   },
   "files": [
     {
@@ -139,8 +139,8 @@
     },
     {
       "path": "webtorch/encoder.py",
-      "bytes": 21998,
-      "sha256": "8150c801375858286ac57438e4af4e7be8e06a42c6212fae9c910b6d246b6550"
+      "bytes": 26608,
+      "sha256": "a65f561d67636338657a07353763fa6d72082c1df3098860fcb2d31957cc2016"
     },
     {
       "path": "webtorch/ggufload.py",
