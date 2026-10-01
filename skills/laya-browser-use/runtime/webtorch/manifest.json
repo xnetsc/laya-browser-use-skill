@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "6f6f56974f2b25b885faa270d8a1a0563ae0ed92"
+    "commit": "a69f9c1426e01f01c79944bb23356fe1c146a0d1"
   },
   "files": [
     {
@@ -89,8 +89,8 @@
     },
     {
       "path": "webtorch/__init__.py",
-      "bytes": 8581,
-      "sha256": "5e271ded4d2cbd20dc9bc7b29ab1527e5b5ece38ecdb9ddb5de525a17d9c6e03"
+      "bytes": 8756,
+      "sha256": "046cec5549f0e46511e22f239bde5b395ae5fd6802d7e9e6dba20d7163c69b39"
     },
     {
       "path": "webtorch/_core.py",
@@ -259,8 +259,8 @@
     },
     {
       "path": "webtorch/webio.py",
-      "bytes": 114638,
-      "sha256": "cf53b54a0661d095c906722006231e13ebb727e9ab579f91001990f88342b5d0"
+      "bytes": 123595,
+      "sha256": "3d1d295d30b3688902faaef8924ee7b45dc5e9f51e46a270db0a57ad07737e4b"
     }
   ]
 }
