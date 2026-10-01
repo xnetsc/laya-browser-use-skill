@@ -12,8 +12,10 @@ the same local decisions over HTTP and stdio for reuse by hosts.
 - `bridge.mjs`: browser candidate-selection adapter
 - `laya-page.html`: WebGPU model host page
 - `prepare-model.mjs`: Git-LFS-first model materializer with verified resumable fallback
-- `runtime/models/laya/`: the checkpoint named by `manifest.json`, bundled or prepared later
-- `runtime/models/laya/manifest.json`: model id, source URLs, and every asset/support-file path and digest
+- `runtime/models/<model>/`: the checkpoint named by its `manifest.json`, bundled or prepared later.
+  The directory is found, not named in code -- whichever one carries a `manifest.json` is the model,
+  so changing the checkpoint needs no code change. `LAYA_MODEL_DIR` picks one when several exist.
+- its `manifest.json`: model id, source URLs, and every asset/support-file digest
 - `runtime/webtorch/`: bundled webtorch runtime
 - `runtime/node_modules/playwright*`: cross-platform Chromium launcher
 
@@ -109,7 +111,7 @@ Import `laya-local.mjs` and call `warmLocalDecision()`, or send `{"op":"warm"}` 
 result reports:
 
 - provider: `laya-local`
-- model: the identifier from `runtime/models/laya/manifest.json`
+- model: the identifier from the model directory's `manifest.json`
 - backend: `webgpu`
 - the selected runtime browser and operating system
 

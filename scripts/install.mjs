@@ -3,7 +3,7 @@ import {basename, dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {resolveInstallTarget} from './install-target.mjs';
 import {
-  ensureModel, MODEL_ASSETS, MODEL_SUPPORT_FILES,
+  ensureModel, MODEL_ASSETS, MODEL_PREFIX, MODEL_SUPPORT_FILES,
 } from '../skills/laya-browser-use/prepare-model.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -47,8 +47,8 @@ for (const relative of [
   'prepare-model.mjs',
   'webtorch-update.mjs',
   'references/decision-api.md',
-  'runtime/models/laya/manifest.json',
-  ...MODEL_SUPPORT_FILES.map((file) => `runtime/models/laya/${file.path}`),
+  `${MODEL_PREFIX}manifest.json`,
+  ...MODEL_SUPPORT_FILES.map((file) => `${MODEL_PREFIX}${file.path}`),
   'runtime/node_modules/playwright/index.mjs',
   'runtime/webtorch/dist/wgpy-main.js',
   'runtime/webtorch/dist/wgpy-worker.js',

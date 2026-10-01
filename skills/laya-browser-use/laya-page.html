@@ -27,6 +27,10 @@ if (webtorch.onError) webtorch.onError((error) => {
     });
     runtime.model = String(modelManifest.model || '');
     if (!runtime.model) throw new Error('model manifest has no model identifier');
+    // Where the files are served is the server's to say, not this page's to spell: the
+    // checkpoint lives in a directory that is found rather than named.
+    const modelMount = String(modelManifest.mount || '');
+    if (!modelMount) throw new Error('model manifest has no mount path');
     const wt = await webtorch.start({
       baseURL: '/',
       pyodideIndexURL: PYODIDE_INDEX_URL,
@@ -57,7 +61,7 @@ if (webtorch.onError) webtorch.onError((error) => {
       cacheInfo,
       readCached,
       load: async () => {
-        const info = await wt.load('/models/laya/', {
+        const info = await wt.load(modelMount, {
           onProgress: (progress) => report('read ' + Math.round((progress.bytes || 0) / 1048576) + ' MB'),
           onStage: (stage) => report(String(stage.stage || stage)),
         });

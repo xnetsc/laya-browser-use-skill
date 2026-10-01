@@ -3,6 +3,7 @@ import {createReadStream} from 'node:fs';
 import {copyFile, mkdir, mkdtemp, open, readFile, rename, rm, stat, writeFile} from 'node:fs/promises';
 import {dirname, join, resolve} from 'node:path';
 import {tmpdir} from 'node:os';
+import {modelPrefix, modelRoot} from './model-dir.mjs';
 
 const DEFAULT_MANIFEST_URL = 'https://raw.githubusercontent.com/xnetsc/laya-browser-use-skill/main/skills/laya-browser-use/runtime/webtorch/manifest.json';
 const MODEL_REGISTRY = process.env.LAYA_MODEL_REGISTRY
@@ -24,8 +25,7 @@ function safePath(value) {
     && !value.includes('\\') && !value.split('/').includes('..');
 }
 
-function modelLocalPath(asset) {
-  const prefix = 'runtime/models/laya/';
+function modelLocalPath(asset, prefix) {
   const relative = String(asset?.relative || '');
   return relative.startsWith(prefix) ? relative.slice(prefix.length) : relative;
 }
@@ -61,7 +61,7 @@ function validateManifest(value) {
   return value;
 }
 
-function validateModelManifest(value) {
+function validateModelManifest(value, prefix) {
   if (value?.protocol !== 1 || typeof value.model !== 'string' || !value.model
       || !Array.isArray(value.sources) || !value.sources.length
       || !Array.isArray(value.assets) || !value.assets.length || value.assets.length > 32
@@ -74,7 +74,14 @@ function validateModelManifest(value) {
   }
   const seen = new Set();
   for (const asset of value.assets) {
-    if (!safePath(asset?.relative) || !asset.relative.startsWith('runtime/models/laya/')
+    // `relative` is where the asset lands in the skill, and the manifest need not say: it is
+    // the model's directory plus the asset's own path, and the directory is found on disk.
+    // A manifest that does say it has to agree, so that a published manifest cannot redirect
+    // a write somewhere else.
+    if (asset && asset.relative === undefined && safePath(asset.sourcePath)) {
+      asset.relative = prefix + asset.sourcePath;
+    }
+    if (!safePath(asset?.relative) || !asset.relative.startsWith(prefix)
         || !safePath(asset?.sourcePath) || seen.has(asset.relative)
         || !Number.isSafeInteger(asset.bytes) || asset.bytes < 1
         || !/^[0-9a-f]{64}$/.test(String(asset.sha256 || ''))) {
@@ -199,17 +206,18 @@ async function downloadVerified({fetchImpl, urls, destination, file, log}) {
 }
 
 async function prepareModelDirectory({skillRoot, remoteModel, modelManifestUrl, fetchImpl, log}) {
-  const modelRoot = resolve(skillRoot, 'runtime', 'models', 'laya');
+  const modelDir = modelRoot(skillRoot);
+  const prefix = modelPrefix(skillRoot);
   const version = createHash('sha256').update(JSON.stringify(remoteModel)).digest('hex').slice(0, 16);
-  const staged = resolve(dirname(modelRoot), `.laya-update-${version}`);
+  const staged = resolve(dirname(modelDir), `.laya-update-${version}`);
   await mkdir(staged, {recursive: true});
   const sourceValues = [process.env.LAYA_MODEL_BASE_URL, ...remoteModel.sources].filter(Boolean);
   const sources = [...new Set(sourceValues.map((value) => value.endsWith('/') ? value : `${value}/`))];
 
   await mapLimit(remoteModel.assets, 2, async (asset) => {
-    const localPath = modelLocalPath(asset);
+    const localPath = modelLocalPath(asset, prefix);
     const destination = resolve(staged, localPath);
-    const current = resolve(modelRoot, localPath);
+    const current = resolve(modelDir, localPath);
     if (await validFile(current, asset) && !(await stat(destination).catch(() => null))) {
       await mkdir(dirname(destination), {recursive: true});
       await copyFile(current, destination);
@@ -226,7 +234,7 @@ async function prepareModelDirectory({skillRoot, remoteModel, modelManifestUrl, 
   const supportBase = new URL('./', modelManifestUrl);
   await mapLimit(remoteModel.supportFiles, 4, async (file) => {
     const destination = resolve(staged, file.path);
-    const current = resolve(modelRoot, file.path);
+    const current = resolve(modelDir, file.path);
     if (await validFile(current, file) && !(await stat(destination).catch(() => null))) {
       await mkdir(dirname(destination), {recursive: true});
       await copyFile(current, destination);
@@ -242,7 +250,7 @@ async function prepareModelDirectory({skillRoot, remoteModel, modelManifestUrl, 
   });
   await writeFile(join(staged, 'manifest.json'), `${JSON.stringify(remoteModel, null, 2)}\n`);
   for (const asset of remoteModel.assets) {
-    const localPath = modelLocalPath(asset);
+    const localPath = modelLocalPath(asset, prefix);
     if (!(await validFile(resolve(staged, localPath), asset))) throw new Error(`Staged model is invalid: ${localPath}`);
   }
   for (const file of remoteModel.supportFiles) {
@@ -297,7 +305,7 @@ export async function updateWebtorchRuntime({
   skillRoot,
   manifestUrl = process.env.LAYA_RUNTIME_MANIFEST_URL || DEFAULT_MANIFEST_URL,
   modelManifestUrl = process.env.LAYA_MODEL_MANIFEST_URL
-    || new URL('../models/laya/manifest.json', manifestUrl).href,
+    || new URL(`../models/${modelPrefix(skillRoot).split('/')[2]}/manifest.json`, manifestUrl).href,
   fetchImpl = fetch,
   beforeApply = async () => {},
   log = (message) => console.error(`[laya:update] ${message}`),
@@ -314,16 +322,17 @@ export async function updateWebtorchRuntime({
     if (!runtimeResponse.ok) throw new Error(`runtime manifest HTTP ${runtimeResponse.status}`);
     if (!modelResponse.ok) throw new Error(`model manifest HTTP ${modelResponse.status}`);
     remote = validateManifest(await runtimeResponse.json());
-    remoteModel = validateModelManifest(await modelResponse.json());
+    remoteModel = validateModelManifest(await modelResponse.json(), modelPrefix(skillRoot));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log(`check unavailable; keeping the installed runtime (${message})`);
     return {status: 'unavailable', error: message};
   }
-  const modelManifestPath = resolve(skillRoot, 'runtime', 'models', 'laya', 'manifest.json');
+  const modelManifestPath = resolve(modelRoot(skillRoot), 'manifest.json');
   let localModel = null;
   try {
-    localModel = validateModelManifest(JSON.parse(await readFile(modelManifestPath, 'utf8')));
+    localModel = validateModelManifest(JSON.parse(await readFile(modelManifestPath, 'utf8')),
+                                      modelPrefix(skillRoot));
   } catch {}
   const modelChanged = JSON.stringify(localModel) !== JSON.stringify(remoteModel);
   const localRuntime = await readLocalManifest(target);
@@ -389,7 +398,7 @@ export async function updateWebtorchRuntime({
     if (runtimeChanged) swaps.push({staged: stagedRuntime, target});
     if (modelChanged) swaps.push({
       staged: stagedModel,
-      target: resolve(skillRoot, 'runtime', 'models', 'laya'),
+      target: modelRoot(skillRoot),
     });
     await replaceDirectories(swaps);
     stagedRuntime = null;

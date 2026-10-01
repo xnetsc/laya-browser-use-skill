@@ -206,8 +206,8 @@ npm run verify:cli
 ```
 
 If any manifest-listed model file is absent but a previous run's persistent browser cache is
-complete, the next run starts from that cache and streams the listed assets back to
-`runtime/models/laya/` with size and SHA-256 checks. A partial cache is not accepted as a model.
+complete, the next run starts from that cache and streams the listed assets back to the model's
+directory with size and SHA-256 checks. A partial cache is not accepted as a model.
 
 - `npm test` checks files, the model digest, structured decision interfaces, and generated runtime
   browser candidates for Windows, Linux, and macOS.
@@ -233,7 +233,12 @@ Windows uses PowerShell and macOS uses the system `zip` utility.
 - `skills/laya-browser-use/`: portable skill directory
 - `scripts/install.mjs`: non-destructive cross-host installer
 - `skills/laya-browser-use/prepare-model.mjs`: Git-LFS-first, resumable model preparation
-- `skills/laya-browser-use/runtime/models/laya/manifest.json`: model identifier, file paths, sources, sizes, and hashes
+- `skills/laya-browser-use/runtime/models/<model>/manifest.json`: model identifier, sources, sizes
+  and hashes. The directory is **found**, not named in code: whichever one under
+  `runtime/models/` carries a `manifest.json` is the model, so changing the checkpoint is
+  dropping a directory in and taking the old one out. `LAYA_MODEL_DIR` picks one when several
+  are present. It currently holds `mccoysc/xDecision`.
+- `skills/laya-browser-use/model-dir.mjs`: that rule, in one place
 - `skills/laya-browser-use/runtime/webtorch/manifest.json`: synced WebPyTorch file list and hashes
 - `scripts/sync-webpytorch.mjs`: upstream dependency synchronizer
 - `skills/laya-browser-use/webtorch-update.mjs`: startup updater with atomic runtime/model switching

@@ -10,6 +10,10 @@ const skillRoot = join(temporary, 'skill');
 const registry = join(temporary, 'registry');
 process.env.LAYA_MODEL_REGISTRY = registry;
 const {updateWebtorchRuntime} = await import(`../skills/laya-browser-use/webtorch-update.mjs?test=${Date.now()}`);
+// This fixture's model directory, deliberately named after NO checkpoint: the updater finds
+// whichever directory under runtime/models/ carries a manifest, so a name it has never seen
+// has to work exactly as well as the real one. The test fails if that stops being true.
+const MODEL_PREFIX = 'runtime/models/a-made-up-name/';
 
 const runtimePaths = [
   'LICENSE',
@@ -59,7 +63,7 @@ function modelManifest(name, assets, support, sources) {
     sources,
     supportFiles: [...support].map(([path, bytes]) => ({path, bytes: bytes.length, sha256: sha(bytes)})),
     assets: [...assets].map(([sourcePath, bytes]) => ({
-      relative: `runtime/models/laya/${sourcePath}`,
+      relative: `${MODEL_PREFIX}${sourcePath}`,
       sourcePath,
       bytes: bytes.length,
       sha256: sha(bytes),
@@ -114,7 +118,7 @@ try {
   const oldModel = modelManifest('old-model', oldModelFiles, oldSupportFiles, [`${base}/assets/`]);
   const remoteModel = modelManifest('new-model', modelFiles, supportFiles, [`${base}/assets/`]);
   await seed(join(skillRoot, 'runtime', 'webtorch'), oldRuntime, oldRuntimeFiles);
-  await seed(join(skillRoot, 'runtime', 'models', 'laya'), oldModel, new Map([...oldModelFiles, ...oldSupportFiles]));
+  await seed(join(skillRoot, MODEL_PREFIX.replace(/\/$/, '')), oldModel, new Map([...oldModelFiles, ...oldSupportFiles]));
 
   let beforeApply = 0;
   const first = await updateWebtorchRuntime({
@@ -126,7 +130,7 @@ try {
   });
   assert.equal(first.status, 'failed');
   assert.equal(beforeApply, 0);
-  assert.deepEqual(await readFile(join(skillRoot, 'runtime/models/laya/model.safetensors')), oldModelFiles.get('model.safetensors'));
+  assert.deepEqual(await readFile(join(skillRoot, `${MODEL_PREFIX}model.safetensors`)), oldModelFiles.get('model.safetensors'));
   assert.deepEqual(await readFile(join(skillRoot, 'runtime/webtorch/dist/wgpy-main.js')), oldRuntimeFiles.get('dist/wgpy-main.js'));
 
   serveCorruptModel = false;
@@ -136,7 +140,7 @@ try {
     modelManifestUrl: `${base}/model/manifest.json`,
     beforeApply: async () => {
       beforeApply += 1;
-      assert.deepEqual(await readFile(join(skillRoot, 'runtime/models/laya/model.safetensors')), oldModelFiles.get('model.safetensors'));
+      assert.deepEqual(await readFile(join(skillRoot, `${MODEL_PREFIX}model.safetensors`)), oldModelFiles.get('model.safetensors'));
     },
     log: () => {},
   });
@@ -144,7 +148,7 @@ try {
   assert.equal(second.modelUpdated, true);
   assert.equal(second.requiresProcessRestart, true);
   assert.equal(beforeApply, 1);
-  assert.deepEqual(await readFile(join(skillRoot, 'runtime/models/laya/model.safetensors')), modelFiles.get('model.safetensors'));
+  assert.deepEqual(await readFile(join(skillRoot, `${MODEL_PREFIX}model.safetensors`)), modelFiles.get('model.safetensors'));
   assert.deepEqual(await readFile(join(skillRoot, 'runtime/webtorch/dist/wgpy-main.js')), runtimeFiles.get('dist/wgpy-main.js'));
   await assert.rejects(access(registry));
 

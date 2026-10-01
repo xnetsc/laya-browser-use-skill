@@ -17,8 +17,12 @@ try {
   ], {stdio: 'pipe'});
   assert.equal(await exists(join(target, 'prepare-model.mjs')), true);
   assert.equal(await exists(join(target, 'runtime/webtorch/dist/wgpy-main.js')), true);
-  assert.equal(await exists(join(target, 'runtime/models/laya/model.safetensors')), false);
-  assert.equal(await exists(join(target, 'runtime/models/laya/tokenizer/tokenizer.json')), false);
+  // The model's directory is discovered, so the test asks the skill where it is rather
+  // than spelling a name that a change of checkpoint would quietly invalidate.
+  const {MODEL_PREFIX, MODEL_ASSETS} = await import('../skills/laya-browser-use/prepare-model.mjs');
+  for (const asset of MODEL_ASSETS) {
+    assert.equal(await exists(join(target, MODEL_PREFIX + asset.sourcePath)), false);
+  }
 
   const check = spawnSync(process.execPath, [join(target, 'prepare-model.mjs'), '--check'], {
     encoding: 'utf8',

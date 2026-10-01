@@ -12,19 +12,20 @@ import {updateWebtorchRuntime} from './webtorch-update.mjs';
 const ROOT = dirname(fileURLToPath(import.meta.url));
 // Update the complete dependency/model transaction before loading the manifest module. This
 // prevents a direct module import from retaining constants for a superseded model revision.
+const {modelRoot} = await import('./model-dir.mjs');
 const INITIAL_UPDATE = await updateWebtorchRuntime({skillRoot: ROOT});
 const {
-  discoverLocalModelSource, ensureModel, LOCAL_MODEL_REGISTRY, MODEL_ASSETS, MODEL_SUPPORT_FILES,
-  modelLocalPath, modelManifest, validModelDirectory,
+  discoverLocalModelSource, ensureModel, LOCAL_MODEL_REGISTRY, MODEL_ASSETS, MODEL_MOUNT,
+  MODEL_SUPPORT_FILES, modelLocalPath, modelManifest, validModelDirectory,
 } = await import('./prepare-model.mjs');
 const WEBTORCH = join(ROOT, 'runtime', 'webtorch');
-const MODEL = join(ROOT, 'runtime', 'models', 'laya');
+const MODEL = modelRoot(ROOT);                     // the directory, found rather than named
 const PAGE = join(ROOT, 'laya-page.html');
 const RUNTIME_PORT = Number.parseInt(process.env.LAYA_RUNTIME_PORT || '8765', 10) || 8765;
 const PROXY_PORT = RUNTIME_PORT + 1;
 const MAX_QUEUE = Math.max(1, Number.parseInt(process.env.LAYA_MAX_QUEUE || '64', 10) || 64);
 const CACHE_FILES = [
-  ...MODEL_ASSETS.map((asset) => ({...asset, cachePath: `/models/laya/${modelLocalPath(asset)}`})),
+  ...MODEL_ASSETS.map((asset) => ({...asset, cachePath: `${MODEL_MOUNT}${modelLocalPath(asset)}`})),
 ];
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -68,8 +69,8 @@ function enqueueOperation(operation) {
 
 function mountedPath(url, modelRoot = MODEL) {
   if (url.pathname === '/laya.html') return PAGE;
-  if (url.pathname.startsWith('/models/laya/')) {
-    const relative = decodeURIComponent(url.pathname.slice('/models/laya/'.length));
+  if (url.pathname.startsWith(MODEL_MOUNT)) {
+    const relative = decodeURIComponent(url.pathname.slice(MODEL_MOUNT.length));
     const path = resolve(modelRoot, relative);
     if (path !== modelRoot && !path.startsWith(modelRoot + sep)) return null;
     return path;
@@ -182,7 +183,7 @@ export function platformBrowserCandidates({
 }
 
 async function proxyModel(request, response, url, modelBaseUrl) {
-  const relative = decodeURIComponent(url.pathname.slice('/models/laya/'.length));
+  const relative = decodeURIComponent(url.pathname.slice(MODEL_MOUNT.length));
   const allowed = MODEL_ASSETS.some((asset) => modelLocalPath(asset) === relative)
     || MODEL_SUPPORT_FILES.some((file) => file.path === relative);
   if (!allowed) {
@@ -191,7 +192,7 @@ async function proxyModel(request, response, url, modelBaseUrl) {
   }
   const headers = {};
   if (request.headers.range) headers.Range = request.headers.range;
-  const upstream = await fetch(new URL(`models/laya/${relative}`, modelBaseUrl), {
+  const upstream = await fetch(new URL(`${MODEL_MOUNT.slice(1)}${relative}`, modelBaseUrl), {
     headers,
     signal: AbortSignal.timeout(20 * 60 * 1000),
   });
@@ -222,7 +223,7 @@ async function serve(request, response, {modelBaseUrl = null, modelRoot = MODEL}
       }).end(body);
       return;
     }
-    if (modelBaseUrl && url.pathname.startsWith('/models/laya/')) {
+    if (modelBaseUrl && url.pathname.startsWith(MODEL_MOUNT)) {
       await proxyModel(request, response, url, modelBaseUrl);
       return;
     }

@@ -7,20 +7,30 @@ import {mkdir, open, readdir, readFile, rename, rm, stat} from 'node:fs/promises
 import {tmpdir} from 'node:os';
 import {dirname, isAbsolute, join, relative, resolve, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {modelDirName, modelMount, modelPrefix, modelRoot as modelRootDir} from './model-dir.mjs';
 
 const skillRoot = dirname(fileURLToPath(import.meta.url));
 export const LOCAL_MODEL_REGISTRY = process.env.LAYA_MODEL_REGISTRY
   || join(tmpdir(), 'laya-browser-use-model-servers-v1');
 
-const MODEL_MANIFEST_PATH = join(skillRoot, 'runtime', 'models', 'laya', 'manifest.json');
+// Which model this skill carries is a fact about the files on disk, not about this file.
+// See model-dir.mjs.
+export const MODEL_DIR_NAME = modelDirName(skillRoot);
+export const MODEL_PREFIX = modelPrefix(skillRoot);
+export const MODEL_MOUNT = modelMount(skillRoot);
+const MODEL_ROOT = modelRootDir(skillRoot);
+const MODEL_MANIFEST_PATH = join(MODEL_ROOT, 'manifest.json');
 const MODEL_SPEC = JSON.parse(readFileSync(MODEL_MANIFEST_PATH, 'utf8'));
 if (MODEL_SPEC?.protocol !== 1 || typeof MODEL_SPEC.model !== 'string' || !Array.isArray(MODEL_SPEC.assets)) {
   throw new Error('Invalid bundled model manifest.');
 }
-export const MODEL_ASSETS = MODEL_SPEC.assets.map((asset) => ({...asset}));
+// `relative` is where an asset lands in the skill, so it is COMPUTED from the directory the
+// manifest was found in rather than written in the manifest: a manifest that spelled the
+// path would be a second place for the directory name to live, and the two would drift.
+export const MODEL_ASSETS = MODEL_SPEC.assets.map((asset) => ({
+  ...asset, relative: MODEL_PREFIX + String(asset.sourcePath || ''),
+}));
 export const MODEL_SUPPORT_FILES = (MODEL_SPEC.supportFiles || []).map((file) => ({...file}));
-
-const MODEL_PREFIX = 'runtime/models/laya/';
 
 export function modelLocalPath(asset) {
   const relativePath = String(asset?.relative || '');
@@ -33,6 +43,7 @@ export function modelManifest() {
   return {
     protocol: MODEL_SPEC.protocol,
     model: MODEL_SPEC.model,
+    mount: MODEL_MOUNT,                 // where the local server serves these files
     sources: [...DEFAULT_BASE_URLS],
     supportFiles: MODEL_SUPPORT_FILES.map((file) => ({...file})),
     assets: MODEL_ASSETS.map(({relative, sourcePath, bytes, sha256}) => ({
@@ -98,7 +109,7 @@ async function probeLocalBase(baseUrl) {
   });
   if (!manifestResponse.ok || !sameManifest(await manifestResponse.json())) return false;
   for (const asset of MODEL_ASSETS) {
-    const response = await fetch(new URL(`models/laya/${modelLocalPath(asset)}`, base), {
+    const response = await fetch(new URL(`${MODEL_MOUNT.slice(1)}${modelLocalPath(asset)}`, base), {
       headers: {Range: 'bytes=0-0'},
       signal: AbortSignal.timeout(1500),
     });
@@ -288,9 +299,9 @@ export async function ensureModel({
   }
 
   const missingSupport = [];
-  const modelRoot = join(root, 'runtime', 'models', 'laya');
+  const modelDir = join(root, ...MODEL_PREFIX.replace(/\/$/, '').split('/'));
   for (const file of MODEL_SUPPORT_FILES) {
-    const path = join(modelRoot, file.path);
+    const path = join(modelDir, file.path);
     const info = await stat(path).catch(() => null);
     if (!info?.isFile() || info.size !== file.bytes || await digest(path) !== file.sha256) missingSupport.push(file.path);
   }
@@ -318,7 +329,7 @@ async function main() {
   const checkOnly = args.includes('--check');
   const lfsOnly = args.includes('--lfs-only');
   const result = checkOnly
-    ? {status: (await validModelDirectory(join(skillRoot, 'runtime', 'models', 'laya'))) ? 'ready' : 'missing', method: 'check'}
+    ? {status: (await validModelDirectory(MODEL_ROOT)) ? 'ready' : 'missing', method: 'check'}
     : await ensureModel({
       useGitLfs: !args.includes('--no-lfs'),
       allowHttpDownload: !lfsOnly,

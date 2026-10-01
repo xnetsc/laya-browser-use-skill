@@ -1,0 +1,40 @@
+{
+  "protocol": 1,
+  "model": "mccoysc/xDecision",
+  "sources": [
+    "https://media.githubusercontent.com/media/xnetsc/laya-browser-use-skill/main/skills/laya-browser-use/runtime/models/xdecision/",
+    "https://hf-mirror.com/mccoysc/xDecision/resolve/main/models/checkpoint/",
+    "https://huggingface.co/mccoysc/xDecision/resolve/main/models/checkpoint/",
+    "https://modelscope.ai/models/mccoysc/xDecision/resolve/master/models/checkpoint/",
+    "https://modelscope.cn/models/mccoysc/xDecision/resolve/master/models/checkpoint/"
+  ],
+  "supportFiles": [
+    {
+      "path": "rl_agent_config.json",
+      "bytes": 457,
+      "sha256": "2d6e51faf097ff64f5830e973ca292289e6598d5faa6fea5ebf05c185b87b430"
+    },
+    {
+      "path": "encoder/config.json",
+      "bytes": 1938,
+      "sha256": "83f6916d13ef0f556ac461f28308dc2bffa7ebeadee8ec9e2db5812020ea5bb4"
+    },
+    {
+      "path": "tokenizer/tokenizer_config.json",
+      "bytes": 525,
+      "sha256": "30d70c8bf5bd2891248089fb1be43477e09a3a3deeb9f26e8dafb4d16ced64e0"
+    }
+  ],
+  "assets": [
+    {
+      "sourcePath": "tokenizer/tokenizer.json",
+      "bytes": 34363189,
+      "sha256": "0be5487f39c5ddc334beb659aa180e4d8a347293bc21a5d85df7ec1674cc4c8c"
+    },
+    {
+      "sourcePath": "model.safetensors",
+      "bytes": 643835514,
+      "sha256": "73e882ecbff54b1b3fc4ad25940f333ab3af4aa44cbaf87327605295476dfc09"
+    }
+  ]
+}

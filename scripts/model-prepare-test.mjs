@@ -22,7 +22,7 @@ const server = createServer((request, response) => {
     response.writeHead(200, {'Content-Type': 'application/json'}).end(JSON.stringify(modelManifest()));
     return;
   }
-  const modelPrefix = '/models/laya/';
+  const modelPrefix = modelManifest().mount;
   if (request.url.startsWith(modelPrefix)) {
     const sourcePath = decodeURIComponent(request.url.slice(modelPrefix.length));
     const asset = MODEL_ASSETS.find((value) => value.sourcePath === sourcePath);

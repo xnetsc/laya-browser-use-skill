@@ -5,7 +5,7 @@ description: Score a choice, ordered level, or true/false statement only when th
 
 # Local Laya decisions
 
-Use the model named by `runtime/models/laya/manifest.json` for structured decisions. The model runs
+Use the model named by the `manifest.json` in the one directory under `runtime/models/` for structured decisions. The model runs
 locally through WebGPU in a private headless Chromium process. Inference uses no remote decision
 endpoint or model hub after model preparation. The manifest is the source of truth for the model
 identifier, every required relative file path, source path, size, digest, and download source.

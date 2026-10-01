@@ -44,7 +44,7 @@ const required = [
   ['references/browser-adapters.md', 100],
   ['references/decision-api.md', 100],
   ['references/provider-configuration.md', 100],
-  ['runtime/models/laya/manifest.json', 100],
+  [`${model.MODEL_PREFIX}manifest.json`, 100],
   ['runtime/node_modules/playwright/index.mjs', 100],
   ['runtime/webtorch/dist/wgpy-main.js', 1000],
   ['runtime/webtorch/dist/wgpy-worker.js', 1000],
@@ -56,7 +56,7 @@ const required = [
   ['runtime/webtorch/webtorch/js/webtorch-host.js', 1000],
   ['runtime/webtorch/webtorch/js/webtorch-worker.js', 1000],
 ];
-for (const file of model.MODEL_SUPPORT_FILES) required.push([`runtime/models/laya/${file.path}`, file.bytes]);
+for (const file of model.MODEL_SUPPORT_FILES) required.push([`${model.MODEL_PREFIX}${file.path}`, file.bytes]);
 if (!withoutModel) {
   for (const asset of model.MODEL_ASSETS) required.push([asset.relative, asset.bytes]);
 }
@@ -82,7 +82,7 @@ if (!/^---\s*\nname: laya-browser-use\n/m.test(skillText)) {
   throw new Error('SKILL.md frontmatter does not declare laya-browser-use');
 }
 
-if (!withoutModel && !(await model.validModelDirectory(join(skillRoot, 'runtime', 'models', 'laya')))) {
+if (!withoutModel && !(await model.validModelDirectory(join(skillRoot, model.MODEL_PREFIX.replace(/\/$/, ''))))) {
   throw new Error('Bundled model files failed manifest verification. Run: node skills/laya-browser-use/prepare-model.mjs');
 }
 
