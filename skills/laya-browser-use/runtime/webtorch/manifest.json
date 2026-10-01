@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "ec517acaa406dbc3e25363f0436941d77386e524"
+    "commit": "fd5196911a5000a3bccb6aacd39f40646795437c"
   },
   "files": [
     {
@@ -129,8 +129,8 @@
     },
     {
       "path": "webtorch/decision.py",
-      "bytes": 58241,
-      "sha256": "689b2ad51971719d98729c8854cf15b45d8825175b279cc5632c518f30efb5f1"
+      "bytes": 59147,
+      "sha256": "d9ee39e8cb92c464561cc2e028672aff76255347c4b58de36ec2247be6284a6b"
     },
     {
       "path": "webtorch/detection.py",
