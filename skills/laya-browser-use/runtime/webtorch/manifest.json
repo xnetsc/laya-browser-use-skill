@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "be514901e3f8e052638c8c51a770729c38342745"
+    "commit": "ec517acaa406dbc3e25363f0436941d77386e524"
   },
   "files": [
     {
@@ -99,8 +99,8 @@
     },
     {
       "path": "webtorch/_sdk.py",
-      "bytes": 37947,
-      "sha256": "aec963165d096be13170d75f79a5fdf4bd6843ba1370b2c8a74b71000d078ab8"
+      "bytes": 39491,
+      "sha256": "d985ab4b8c321f2f737efdb9ed7f8fd550ae72a69a601b03d4ab114f3932d8cc"
     },
     {
       "path": "webtorch/_wgsl2glsl.py",
@@ -129,8 +129,8 @@
     },
     {
       "path": "webtorch/decision.py",
-      "bytes": 50897,
-      "sha256": "0659579d6f240daff58dd71b5e8f86c4817aee2b79805ce3857d1f0a45c188c7"
+      "bytes": 58241,
+      "sha256": "689b2ad51971719d98729c8854cf15b45d8825175b279cc5632c518f30efb5f1"
     },
     {
       "path": "webtorch/detection.py",
@@ -139,8 +139,8 @@
     },
     {
       "path": "webtorch/encoder.py",
-      "bytes": 26719,
-      "sha256": "8d37fcb9a0c1baae8eb56a33749a5b6d2d4d276fb8602301dd98150857d0ca7e"
+      "bytes": 30325,
+      "sha256": "f291b1750cade36bfdf8de58533fd70d9e3d62a84b9fc3f60e9563aca07e6632"
     },
     {
       "path": "webtorch/ggufload.py",
@@ -159,13 +159,13 @@
     },
     {
       "path": "webtorch/js/decision-vision-runtime.js",
-      "bytes": 14348,
-      "sha256": "4a14723e5f3dec803d6d691f7f409905a1fb107c21c0ba18e869ff7155be2028"
+      "bytes": 17187,
+      "sha256": "35df637c857eba5fbb36e29fae86e8d32698d8fb23d4cca8cad42c71361d54d8"
     },
     {
       "path": "webtorch/js/decision-vision-worker.js",
-      "bytes": 10580,
-      "sha256": "f62e137678f6516050533a036db07291acbfe9ca57ee592f0d309e1569e238a9"
+      "bytes": 10576,
+      "sha256": "1e7b66bf499d240e91877e9fceab38b413205616705fe77294d7434c9bd0b2e1"
     },
     {
       "path": "webtorch/js/decision-vision.js",
@@ -259,8 +259,8 @@
     },
     {
       "path": "webtorch/webio.py",
-      "bytes": 128540,
-      "sha256": "4292e20ad1013ec836992b096f5c219cda776f8f4c9a19c220bfc12ac55985b1"
+      "bytes": 129505,
+      "sha256": "cf4167cf6c428aa759ac9b6b92b32dad6283c60160ee4eb6b041aba036bf074b"
     }
   ]
 }
