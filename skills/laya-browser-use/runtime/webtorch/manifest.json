@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "dd3b446c858135066b83d2bfe67f2059ad159bdd"
+    "commit": "be514901e3f8e052638c8c51a770729c38342745"
   },
   "files": [
     {
@@ -99,8 +99,8 @@
     },
     {
       "path": "webtorch/_sdk.py",
-      "bytes": 37909,
-      "sha256": "f51f64c1e69eb148a535c9919def6ad53b663a73e3e12957154e3060595c0d49"
+      "bytes": 37947,
+      "sha256": "aec963165d096be13170d75f79a5fdf4bd6843ba1370b2c8a74b71000d078ab8"
     },
     {
       "path": "webtorch/_wgsl2glsl.py",
@@ -129,8 +129,8 @@
     },
     {
       "path": "webtorch/decision.py",
-      "bytes": 44790,
-      "sha256": "cda4805a56f49921f7fe0c04d91112d94fc1699b41040799f2da4a4e4ad50712"
+      "bytes": 50897,
+      "sha256": "0659579d6f240daff58dd71b5e8f86c4817aee2b79805ce3857d1f0a45c188c7"
     },
     {
       "path": "webtorch/detection.py",
@@ -144,8 +144,8 @@
     },
     {
       "path": "webtorch/ggufload.py",
-      "bytes": 29535,
-      "sha256": "bd217c3757b11c211ce1f3c581891d41e29f3123ce7c49917d5566be027070ca"
+      "bytes": 29704,
+      "sha256": "399409e9b9e8d8771dba99286af6f44b16042459f289687aa8d480898d7afbec"
     },
     {
       "path": "webtorch/hfcompat.py",
@@ -259,8 +259,8 @@
     },
     {
       "path": "webtorch/webio.py",
-      "bytes": 124346,
-      "sha256": "3573bc3685c5fab97ded2137efd4efc0072c5802d8735a91546a45464527c285"
+      "bytes": 128540,
+      "sha256": "4292e20ad1013ec836992b096f5c219cda776f8f4c9a19c220bfc12ac55985b1"
     }
   ]
 }
