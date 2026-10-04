@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "6b1d0505b1440d61f0385cbd8562c309dc8d1cf4"
+    "commit": "883c5823c0e95d613617a2e99e0095dc61ef35c6"
   },
   "files": [
     {
@@ -23,14 +23,39 @@
       "sha256": "c9e56d5f4b6ffe8681fa4ecd10b630077fd8a78b15b05e9b34e8248b82b97242"
     },
     {
+      "path": "dist/commandQueue.d.ts",
+      "bytes": 466,
+      "sha256": "af22127bdf2661c7dc78edaa9b37d6071de830b1206dcaf9fc570ee41a8fed42"
+    },
+    {
       "path": "dist/dtype.d.ts",
       "bytes": 412,
       "sha256": "8606f6bff84f411576fc5dfb94e97b159272e7e3f31df212cf36670944aea346"
     },
     {
       "path": "dist/main.d.ts",
-      "bytes": 275,
-      "sha256": "a12dda648b3384b9dd07dfa0cdb29f9e94672edbb3e4ed4fa95390b823e9821f"
+      "bytes": 300,
+      "sha256": "e19ca416ea46f7c29eb41242499cc729acab3b4716cafa5efb10c7ccbd2bee31"
+    },
+    {
+      "path": "dist/routeTopK.d.ts",
+      "bytes": 559,
+      "sha256": "615406d847b21e232300f67182565bcbf612ba3950a499614e59016189ffee63"
+    },
+    {
+      "path": "dist/sampleLogits.d.ts",
+      "bytes": 657,
+      "sha256": "9086359d9a69a046fd621cd19b10b84b98e381ee1eef34efa1c0982d2bb3d58b"
+    },
+    {
+      "path": "dist/sharedReadback.d.ts",
+      "bytes": 558,
+      "sha256": "478a5f2ee2fe7471de99f977ca8d2d364296585a8fcbc49474c6c8c8ce50d1cf"
+    },
+    {
+      "path": "dist/sharedUpload.d.ts",
+      "bytes": 672,
+      "sha256": "1722b7691293f4eaf6e3e41999e4ae958aabc7b773a4d020a9c74d5e200b5598"
     },
     {
       "path": "dist/util.d.ts",
@@ -39,48 +64,53 @@
     },
     {
       "path": "dist/webgl/webglComputeContext.d.ts",
-      "bytes": 3108,
-      "sha256": "a67880051f5b2bf3da4648be7b6d98bc52c5e593bea7f8e7fb4eb6d368b80091"
+      "bytes": 4130,
+      "sha256": "3f1df3ad7a85a5f5c638e022c0ff0b2c6929d4395cd5717da3eeb403aa124699"
     },
     {
       "path": "dist/webgl/webglContext.d.ts",
-      "bytes": 4068,
-      "sha256": "f61f8d69a039c42882e2a0d3d619eae3fc1cea8543d65565b7fca7014dc909d0"
+      "bytes": 4397,
+      "sha256": "e2cfb1921b657593679b35d442b68ffe4ead6d04aead1e8d97f519a55c8ee438"
+    },
+    {
+      "path": "dist/webgpu/vocabSampler.d.ts",
+      "bytes": 2185,
+      "sha256": "36d38440dc3e5a052a24ee73023360f91c49e7aefa78bd3b6ef409dfe8cdcbdb"
     },
     {
       "path": "dist/webgpu/webgpuComputeContext.d.ts",
-      "bytes": 3009,
-      "sha256": "d4e23865aaf79640baf297d26fee49891e0802766d95e109252625aba60b8462"
+      "bytes": 4469,
+      "sha256": "bce145c6c32be27484bc85c94589bef11df0e210846ef2b280809edc2f067a29"
     },
     {
       "path": "dist/webgpu/webgpuContext.d.ts",
-      "bytes": 1330,
-      "sha256": "689b0a7e2d418f1155255e79468d147f2cae33cacbc2271384e863588f2aa6c0"
+      "bytes": 1683,
+      "sha256": "19d33340c40ea9468cad74a0cea5803719bbeaf231b28aaca64c357d5efad557"
     },
     {
       "path": "dist/webgpu/webgpuTensorBuffer.d.ts",
-      "bytes": 532,
-      "sha256": "cdc6dfc5134da866eeed82cfa1fb14863b3b4771582f0422735f60ed7102c8ef"
+      "bytes": 598,
+      "sha256": "642cbd5e8e4d2e48e0c8c522988ea2b031f3e6e5ce0858c643a8fca1322024e0"
     },
     {
       "path": "dist/wgpy-main.js",
-      "bytes": 62862,
-      "sha256": "0648aa39b24ec31bbb468c31815b3acaaa7325581de584ff69cb37f5ff21cb72"
+      "bytes": 105791,
+      "sha256": "6c0c5757a2f683d8179d2a4a165dae5281827af69bd5b7d0a265c26b7a74514c"
     },
     {
       "path": "dist/wgpy-worker.js",
-      "bytes": 13644,
-      "sha256": "8747e9ec80c5924cea3533488936f65539244443e06755009a36dfdb9c58ca64"
+      "bytes": 38132,
+      "sha256": "3dcdc581bdeac1bce3c04f7b928a23660b16c807f4bb36b5cc07d0acab626e21"
     },
     {
       "path": "dist/wgpy_webgl-1.0.0-py3-none-any.whl",
-      "bytes": 49194,
-      "sha256": "41f285646a1ddb140a4578bf4af56d8c751b1361b017e4135be11e9640e6ec62"
+      "bytes": 49149,
+      "sha256": "64cf1afebbd6499d262a5de1c8345d85ba8226d4abc768231837ffaf7efad163"
     },
     {
       "path": "dist/wgpy_webgpu-1.0.0-py3-none-any.whl",
-      "bytes": 55755,
-      "sha256": "e906abf7d042611a2703fa5e08ac5fd85581e1b527c0aa9ea81e24072f396040"
+      "bytes": 55670,
+      "sha256": "9452b03570201d8708c44c0ab38603127f25f5855f7e107f42c3cf6be8adfbc5"
     },
     {
       "path": "dist/worker.d.ts",
@@ -89,13 +119,13 @@
     },
     {
       "path": "webtorch/__init__.py",
-      "bytes": 8756,
-      "sha256": "046cec5549f0e46511e22f239bde5b395ae5fd6802d7e9e6dba20d7163c69b39"
+      "bytes": 8794,
+      "sha256": "ebddc6425654857bc6583f02721046ac7c79b69b7b017dcb9594bb49018f5ad4"
     },
     {
       "path": "webtorch/_core.py",
-      "bytes": 427748,
-      "sha256": "dd4e7e801ca1ed0547e6e7381cc30ac0dbfe566f3b0cc4b0f1cfd038d329a134"
+      "bytes": 550453,
+      "sha256": "e9eeed6b8c4cbd460f5b8b62e92c530445e2286bc2ea962eedd420fb58a8dbd3"
     },
     {
       "path": "webtorch/_sdk.py",
@@ -114,8 +144,8 @@
     },
     {
       "path": "webtorch/backend.py",
-      "bytes": 1677,
-      "sha256": "50dae1273f77811d74de6294274ed5aae7881fa69d0f35782ae785d2d86f5eb6"
+      "bytes": 5420,
+      "sha256": "fc0c03f7b71412e64626eaef7e7dd0979f5d9e13991cd2734aaa1914b27d22c9"
     },
     {
       "path": "webtorch/constrain.py",
@@ -129,8 +159,8 @@
     },
     {
       "path": "webtorch/decision.py",
-      "bytes": 59147,
-      "sha256": "d9ee39e8cb92c464561cc2e028672aff76255347c4b58de36ec2247be6284a6b"
+      "bytes": 63267,
+      "sha256": "183e5346d9f6026045838824ea94030868e8bc0faf7216c3991e9e247833674f"
     },
     {
       "path": "webtorch/detection.py",
@@ -139,8 +169,8 @@
     },
     {
       "path": "webtorch/encoder.py",
-      "bytes": 30325,
-      "sha256": "f291b1750cade36bfdf8de58533fd70d9e3d62a84b9fc3f60e9563aca07e6632"
+      "bytes": 30790,
+      "sha256": "c49163a232164978317677ccde18609c8da55ceefbebcfcdf776fc38951ca8db"
     },
     {
       "path": "webtorch/ggufload.py",
@@ -179,18 +209,18 @@
     },
     {
       "path": "webtorch/js/webtorch-host.js",
-      "bytes": 32213,
-      "sha256": "7bfe79b970206d6ee8fdc5e9ef68c1aee4ac94b2166c6a3ac78c3c4a113fbe34"
+      "bytes": 35734,
+      "sha256": "a42556895f1743e5f1e010fea477b9c6768d70854cc5b5bad727351d89b842cc"
     },
     {
       "path": "webtorch/js/webtorch-main.js",
-      "bytes": 29814,
-      "sha256": "a3dfccf740fed726e864705307a43a08783a818f87521edb9f4c7318ef800627"
+      "bytes": 30446,
+      "sha256": "117a49628265c18341a514e338ad96db1dc6edc0cb95699065a963cd891a6d8f"
     },
     {
       "path": "webtorch/js/webtorch-worker.js",
-      "bytes": 19433,
-      "sha256": "e01a1277d13a2e1ab066b243e4d0f5820f79f1082cdfa998aa547c6d788eb2ea"
+      "bytes": 19716,
+      "sha256": "1cb43a8cd6e87fbefd07f422b9ad6f53b19fb0f042ec7dd6acfdf70fe4d5e3b5"
     },
     {
       "path": "webtorch/linear_attn.py",
@@ -199,13 +229,13 @@
     },
     {
       "path": "webtorch/llm.py",
-      "bytes": 211899,
-      "sha256": "205b1c2d714eaced9be6bac2a41c72d1d1aac29d5b0cc86de226e32d02e219f6"
+      "bytes": 324810,
+      "sha256": "54ca7ce46594d6f4bc9c7ab19dcf431efd8b1abaaf61b7436e380163d3687219"
     },
     {
       "path": "webtorch/lm_engine.py",
-      "bytes": 28555,
-      "sha256": "803bcfa7f78ce501ad7122d1c4ddf45991cc41eb6952d9abcc64d8f5bd8e3194"
+      "bytes": 37285,
+      "sha256": "3d5ca399d8960533c04d02177975083035c1da4f5fc4571ddd3031e48bc902fa"
     },
     {
       "path": "webtorch/modules.json",
@@ -219,13 +249,13 @@
     },
     {
       "path": "webtorch/onnxrt.py",
-      "bytes": 22386,
-      "sha256": "f01fb19a39e63236955cf9ceac80de3407db7da1f1c28e640dc4f62cc1959870"
+      "bytes": 27778,
+      "sha256": "7accc0c7cffccead00049eb1e72fc5dd9aae616a801b5b87db54776bf49ddaf9"
     },
     {
       "path": "webtorch/portable.py",
-      "bytes": 11858,
-      "sha256": "a3278e158d9d674bef276008c2334b8e0b91a0294edf358dbf377038311da72d"
+      "bytes": 11848,
+      "sha256": "85196bdd069ecf610126a3c1ec25dfd453313b4c041f7736587705612a2ae3a4"
     },
     {
       "path": "webtorch/quantize.py",
@@ -259,8 +289,8 @@
     },
     {
       "path": "webtorch/webio.py",
-      "bytes": 131243,
-      "sha256": "aef44857148d4432d6b51a04b0ae7942517a548ead75db028d0c9059e5a2ba59"
+      "bytes": 133104,
+      "sha256": "d83007bea14b6b6f86915894f8893311c3bf1332b69e044732f4efbdaa62100b"
     }
   ]
 }
