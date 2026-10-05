@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "dc11ed38d427f394fbbcea7584a998ad1c0226dc"
+    "commit": "79a97519ca4b864a751cdbe6fa4cc85de88569dc"
   },
   "files": [
     {
@@ -134,18 +134,18 @@
     },
     {
       "path": "webtorch/__init__.py",
-      "bytes": 8794,
-      "sha256": "ebddc6425654857bc6583f02721046ac7c79b69b7b017dcb9594bb49018f5ad4"
+      "bytes": 8907,
+      "sha256": "588b590aac1564dee8d938a6690c4025d023cbc590a6cfc315755cc574977f1a"
     },
     {
       "path": "webtorch/_core.py",
-      "bytes": 632587,
-      "sha256": "2b4a855f0271fd222b52d5d84f2bbf5a48c11566728e44f4c1dd0e8dd54cf18d"
+      "bytes": 643611,
+      "sha256": "e37d40087ff7b2d7d2f8069261a9f66464c0938c64736fb4ea963b5705dac596"
     },
     {
       "path": "webtorch/_sdk.py",
-      "bytes": 39491,
-      "sha256": "d985ab4b8c321f2f737efdb9ed7f8fd550ae72a69a601b03d4ab114f3932d8cc"
+      "bytes": 39678,
+      "sha256": "4205266fc88ba2b7ab3eb4dcc5882c13b2ac33217a0a59bb998fbe544172e183"
     },
     {
       "path": "webtorch/_wgsl2glsl.py",
@@ -174,8 +174,8 @@
     },
     {
       "path": "webtorch/decision.py",
-      "bytes": 84293,
-      "sha256": "a6d5835dd00a58478dfe923b0022a8ecc124990087762dbd77056d789c22b26f"
+      "bytes": 84317,
+      "sha256": "0e89c692f2afc904ade1afca5b661d817d078ea01a188ecac1751de412316763"
     },
     {
       "path": "webtorch/detection.py",
@@ -224,8 +224,8 @@
     },
     {
       "path": "webtorch/js/webtorch-host.js",
-      "bytes": 38016,
-      "sha256": "161c183de3218f7fa1e809ed76d8ee405c055c2a781474120de7f742a263d74d"
+      "bytes": 39449,
+      "sha256": "090c540c3025e5571867ea7f3917ea789e936de5eabb75348358b5b7abbbfa99"
     },
     {
       "path": "webtorch/js/webtorch-main.js",
@@ -244,8 +244,8 @@
     },
     {
       "path": "webtorch/llm.py",
-      "bytes": 330056,
-      "sha256": "fe965c43f4211a45dc998069e89e2c84503691772cc3e0ef9695cb988a93bd23"
+      "bytes": 330599,
+      "sha256": "8a72c72ec88bf2e6a6b0d1671f5b320cee389dda3489512a40ee4c15ed252cc7"
     },
     {
       "path": "webtorch/lm_engine.py",
