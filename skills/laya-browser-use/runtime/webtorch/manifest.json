@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "991d3a24ec51c0003dc8e2e51e17ed771f73f27d"
+    "commit": "5e4ee176840ddbada8261383efe1fb491c56c14a"
   },
   "files": [
     {
@@ -139,8 +139,8 @@
     },
     {
       "path": "webtorch/_core.py",
-      "bytes": 600346,
-      "sha256": "1c8b448159b483bb422c241fb2161e0e350b838ba29b318f1a3e5f4bfd430a03"
+      "bytes": 613799,
+      "sha256": "557a18b3a741569850d3b69fda6d298bb340e9dadab3bb50aa735fe6441ce79b"
     },
     {
       "path": "webtorch/_sdk.py",
@@ -174,8 +174,8 @@
     },
     {
       "path": "webtorch/decision.py",
-      "bytes": 81622,
-      "sha256": "6bd52bc9fe277f1bcad89e97e5d87f291eea7d0a1857818dec1df199c9cdd7e6"
+      "bytes": 84293,
+      "sha256": "a6d5835dd00a58478dfe923b0022a8ecc124990087762dbd77056d789c22b26f"
     },
     {
       "path": "webtorch/detection.py",
@@ -224,13 +224,13 @@
     },
     {
       "path": "webtorch/js/webtorch-host.js",
-      "bytes": 37890,
-      "sha256": "87fef18ef5ab1a0cc13cca6861ed32ee465304261faeec9669ac29d13c3d8cef"
+      "bytes": 38016,
+      "sha256": "161c183de3218f7fa1e809ed76d8ee405c055c2a781474120de7f742a263d74d"
     },
     {
       "path": "webtorch/js/webtorch-main.js",
-      "bytes": 31100,
-      "sha256": "9534cdafb7d1e653b87d45e95044b12cfc4d12a044a5c949d958be320f4ea33b"
+      "bytes": 31174,
+      "sha256": "c8dee95b2782ad42b42ccdc423572a05e276b7bc530953fa8c0cb3f947439ccd"
     },
     {
       "path": "webtorch/js/webtorch-worker.js",
@@ -244,8 +244,8 @@
     },
     {
       "path": "webtorch/llm.py",
-      "bytes": 324577,
-      "sha256": "4a22cac6259d71c0b7a67d10ce14b1f32356d507a9a1bacffb58c7540c1ba786"
+      "bytes": 326233,
+      "sha256": "63e3092698e76ce6e4a324e62c24234c69a0ca2bd8075adf84cc30551b6a1d64"
     },
     {
       "path": "webtorch/lm_engine.py",
