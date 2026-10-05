@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "a1e4053988b076f68c33b6f37726104d30715281"
+    "commit": "dccdfeccdb91ef89b11a6aad3cb17f5896805e9e"
   },
   "files": [
     {
@@ -124,8 +124,8 @@
     },
     {
       "path": "dist/wgpy_webgpu-1.0.0-py3-none-any.whl",
-      "bytes": 56525,
-      "sha256": "4892c09d1eeb1f720e0947549776b276b6ecb4145c5b1375b7bf28bf86672deb"
+      "bytes": 56762,
+      "sha256": "52258784f98cbe276057cd87f31163fd86b54cf2bb1df5014134884f04145aeb"
     },
     {
       "path": "dist/worker.d.ts",
@@ -174,8 +174,8 @@
     },
     {
       "path": "webtorch/decision.py",
-      "bytes": 79337,
-      "sha256": "90ef4ff003df4c9102dffed120b586ec0e042d8000bb354ff02712b96b08806d"
+      "bytes": 80435,
+      "sha256": "5b2743b4b5945da0a2ef84944439bbb0ed069fda91cdc22da8155ad5755ebd64"
     },
     {
       "path": "webtorch/detection.py",
@@ -224,8 +224,8 @@
     },
     {
       "path": "webtorch/js/webtorch-host.js",
-      "bytes": 35851,
-      "sha256": "d28827cb03495efee8dbb3e395642a14fd6c8f8e272c0da3f80dfa98e4b5e47b"
+      "bytes": 37890,
+      "sha256": "87fef18ef5ab1a0cc13cca6861ed32ee465304261faeec9669ac29d13c3d8cef"
     },
     {
       "path": "webtorch/js/webtorch-main.js",
