@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "1e874371c51537785ae0f3ec1caf1c26f506c8c9"
+    "commit": "d85e5509b80f8dfb7e78530ba73c0ea90124e865"
   },
   "files": [
     {
@@ -139,8 +139,8 @@
     },
     {
       "path": "webtorch/_core.py",
-      "bytes": 573597,
-      "sha256": "e356126921c12b4a692b93d591f339ee8c7edbfc601052788cb3e7ba7024e2fa"
+      "bytes": 590658,
+      "sha256": "509d7191443f8a5a3294dd4a0ee1936883fa5e0f6f04c7430698a2a7586acc7c"
     },
     {
       "path": "webtorch/_sdk.py",
@@ -174,8 +174,8 @@
     },
     {
       "path": "webtorch/decision.py",
-      "bytes": 80349,
-      "sha256": "c2723e1f3bcba872abda4fb0fc4d5dd1c4bb8db3da9a47e41c02f02ab9067a54"
+      "bytes": 81622,
+      "sha256": "6bd52bc9fe277f1bcad89e97e5d87f291eea7d0a1857818dec1df199c9cdd7e6"
     },
     {
       "path": "webtorch/detection.py",
@@ -184,8 +184,8 @@
     },
     {
       "path": "webtorch/encoder.py",
-      "bytes": 36357,
-      "sha256": "667112fa89e027e2a50eb966bd78dba3c433be8e15add721d83c4ef267016dce"
+      "bytes": 36387,
+      "sha256": "2635138bfa235fd497256c49420b554f88531aac188231dca59de7e76da0c322"
     },
     {
       "path": "webtorch/ggufload.py",
