@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "dccdfeccdb91ef89b11a6aad3cb17f5896805e9e"
+    "commit": "1e874371c51537785ae0f3ec1caf1c26f506c8c9"
   },
   "files": [
     {
@@ -174,8 +174,8 @@
     },
     {
       "path": "webtorch/decision.py",
-      "bytes": 80435,
-      "sha256": "5b2743b4b5945da0a2ef84944439bbb0ed069fda91cdc22da8155ad5755ebd64"
+      "bytes": 80349,
+      "sha256": "c2723e1f3bcba872abda4fb0fc4d5dd1c4bb8db3da9a47e41c02f02ab9067a54"
     },
     {
       "path": "webtorch/detection.py",
@@ -189,8 +189,8 @@
     },
     {
       "path": "webtorch/ggufload.py",
-      "bytes": 29704,
-      "sha256": "399409e9b9e8d8771dba99286af6f44b16042459f289687aa8d480898d7afbec"
+      "bytes": 39018,
+      "sha256": "8e0676c88b74eb9a0c0ea48a35cf5b42a30ad4c45e2b8ea4d0a0f6627e8cdccd"
     },
     {
       "path": "webtorch/hfcompat.py",
@@ -244,8 +244,8 @@
     },
     {
       "path": "webtorch/llm.py",
-      "bytes": 324810,
-      "sha256": "54ca7ce46594d6f4bc9c7ab19dcf431efd8b1abaaf61b7436e380163d3687219"
+      "bytes": 324577,
+      "sha256": "4a22cac6259d71c0b7a67d10ce14b1f32356d507a9a1bacffb58c7540c1ba786"
     },
     {
       "path": "webtorch/lm_engine.py",
