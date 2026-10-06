@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "95ef795846cd3a4cf1998234a6ba2be518bd93f3"
+    "commit": "ca382d69b73b55db251995d10713f4d18088f0b9"
   },
   "files": [
     {
@@ -89,13 +89,13 @@
     },
     {
       "path": "dist/webgpu/webgpuComputeContext.d.ts",
-      "bytes": 4984,
-      "sha256": "2f0c201f0aa18e5c265c58b3f838dd3741b9633994261ca4a9542cd035909f0c"
+      "bytes": 5101,
+      "sha256": "9f75fb8098a9b7989c9865a2ffd884de01f02f287332d165b0f7d112eb69986a"
     },
     {
       "path": "dist/webgpu/webgpuContext.d.ts",
-      "bytes": 2021,
-      "sha256": "0bb82c657cfeccaa1c1284ca0f59d83470de521a4a517faf4471d3f7afdeb869"
+      "bytes": 2233,
+      "sha256": "09fa03eaaa657944907e9737a71e462bb5119cf28590761b571f8a38a777b0bd"
     },
     {
       "path": "dist/webgpu/webgpuTensorBuffer.d.ts",
@@ -109,8 +109,8 @@
     },
     {
       "path": "dist/wgpy-main.js",
-      "bytes": 76604,
-      "sha256": "fbbca332786c4dcc62b818a57bfbb2f74e5a3aac00fca1d4ae56473faff7d92b"
+      "bytes": 78272,
+      "sha256": "76ebed7ee3579160e4ef602e174d8029d51a34ca74b0cba51f534b6368272c21"
     },
     {
       "path": "dist/wgpy-worker.js",
@@ -139,8 +139,8 @@
     },
     {
       "path": "webtorch/_core.py",
-      "bytes": 690444,
-      "sha256": "b7962159fc617726e06d29229827d0b8ebaa29ba00c7613d7c32b1e14c60f312"
+      "bytes": 709755,
+      "sha256": "bfb5940949c18c559171249395d92ba36599575d6b4f1fc52e112041ec508975"
     },
     {
       "path": "webtorch/_sdk.py",
@@ -244,13 +244,13 @@
     },
     {
       "path": "webtorch/llm.py",
-      "bytes": 333176,
-      "sha256": "3e8ec918a1f41af1823226d637c912a0b19df9c903b8e376c8bf9a524436a4c6"
+      "bytes": 336688,
+      "sha256": "2f962b98d3fa20907b5148a11f828061b873e57a648159d225d948bb9cf3b880"
     },
     {
       "path": "webtorch/lm_engine.py",
-      "bytes": 37285,
-      "sha256": "3d5ca399d8960533c04d02177975083035c1da4f5fc4571ddd3031e48bc902fa"
+      "bytes": 37886,
+      "sha256": "fe2147f89537ec82fb9ef71b0db104b3ce27d54467c9340623447494b71e42ea"
     },
     {
       "path": "webtorch/modules.json",
@@ -304,8 +304,8 @@
     },
     {
       "path": "webtorch/webio.py",
-      "bytes": 133104,
-      "sha256": "d83007bea14b6b6f86915894f8893311c3bf1332b69e044732f4efbdaa62100b"
+      "bytes": 134625,
+      "sha256": "0ebeb7bdf621b1c52e0403d0565180159db66451037c89f410689871adce5988"
     }
   ]
 }
