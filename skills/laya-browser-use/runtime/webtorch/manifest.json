@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "79a97519ca4b864a751cdbe6fa4cc85de88569dc"
+    "commit": "f0fa43cc0a5d991c407a4d05e0d20f1c885c3e6c"
   },
   "files": [
     {
@@ -234,8 +234,8 @@
     },
     {
       "path": "webtorch/js/webtorch-worker.js",
-      "bytes": 19508,
-      "sha256": "dcf87f9b7037580509a6909ca8ea83413cd22d3ccb9457822d11f33b37b79f5f"
+      "bytes": 20232,
+      "sha256": "ccd47f1b65ab18c9daa6d4691195b54b6d4f5b1e4d141dbcdf1522562bcc030d"
     },
     {
       "path": "webtorch/linear_attn.py",
