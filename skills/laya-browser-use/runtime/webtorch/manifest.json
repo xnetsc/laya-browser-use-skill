@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "b010ac8f8ec960308d7d7d9d1f45ccd0aa229940"
+    "commit": "36d726337f56e269fde237345702c2fb82638578"
   },
   "files": [
     {
@@ -129,8 +129,8 @@
     },
     {
       "path": "dist/wgpy_webgpu-1.0.0-py3-none-any.whl",
-      "bytes": 58815,
-      "sha256": "9807a6c707b7c31bdbeb58567fd40f5a5bff32b62641aed709cfe07fc2c8521a"
+      "bytes": 59130,
+      "sha256": "b6e2504c85ba5609fab3de4d1f4fec96f5778d1c6f9c3d2f4cf29ce7aadd95ce"
     },
     {
       "path": "dist/worker.d.ts",
@@ -189,8 +189,8 @@
     },
     {
       "path": "webtorch/encoder.py",
-      "bytes": 47826,
-      "sha256": "75330a9316aa3b03f385f0345a4c5903464fd7eba108c24de4754ca031041e53"
+      "bytes": 48139,
+      "sha256": "cef816271e3d538989158ca592b7c0d2e114b616a975a8760f7fa6a9e28a74fe"
     },
     {
       "path": "webtorch/ggufload.py",
