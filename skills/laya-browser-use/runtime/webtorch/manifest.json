@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "bd00721fffc84d10e383732b5629c7d180ac5f12"
+    "commit": "eac0d1875dc5c2b4e6f10dc4ba279c174e85d127"
   },
   "files": [
     {
@@ -139,18 +139,18 @@
     },
     {
       "path": "webtorch/__init__.py",
-      "bytes": 8931,
-      "sha256": "bb287a7b46d1592ae397c8a14b240f485f22e8807ae28b5b0c985a24f67fb1e3"
+      "bytes": 9050,
+      "sha256": "06c1f86dc4974ffa90e8d8cd68222bf6fd09109d0e741af37adedc065a4f1a3b"
     },
     {
       "path": "webtorch/_core.py",
-      "bytes": 754138,
-      "sha256": "a2b97dd82a3990abf0a94dcb2e824cbd846b4a835a31220b9d759150c9611982"
+      "bytes": 771170,
+      "sha256": "1f47d13201c4f8ec679520626bd0351c304b796b8d3e700bc3ff70dd8817218e"
     },
     {
       "path": "webtorch/_sdk.py",
-      "bytes": 40849,
-      "sha256": "d63061b5db8d5ed37d8c13421ddf35fb833c77156e66d20cd2c00c6f1b67342c"
+      "bytes": 42309,
+      "sha256": "b53475d7dac2a85a0800bd19d1c12196005f2837fbedc76775f630c8fab4fa95"
     },
     {
       "path": "webtorch/_wgsl2glsl.py",
@@ -179,8 +179,8 @@
     },
     {
       "path": "webtorch/decision.py",
-      "bytes": 87008,
-      "sha256": "109b674c71de4fd44e241b6dff8cf4b1bb413d12f6eca9b414f383d934a5413d"
+      "bytes": 87368,
+      "sha256": "9f7f44f87d22a03413c8a565dd0fdf2c1c65cdb56f54f51ee2ee737a9e136f80"
     },
     {
       "path": "webtorch/detection.py",
@@ -229,13 +229,13 @@
     },
     {
       "path": "webtorch/js/webtorch-host.js",
-      "bytes": 42331,
-      "sha256": "d1072ffe04a54554b2df6646c0fdbeb5814065a2814e4797a6498b6461645c68"
+      "bytes": 43886,
+      "sha256": "32c6ea5351ffec1f101d0e1ea133ee73878c211ed55362f02ec84a2a96293cee"
     },
     {
       "path": "webtorch/js/webtorch-main.js",
-      "bytes": 31986,
-      "sha256": "3d97e094c7dd2d3dd3a0baaa97462566a8b373cab682f627c4939cd6a36d682c"
+      "bytes": 32877,
+      "sha256": "fd0ca8bf35668bf1289125ad505340bf54d1d0a74fb735939abdfbc3123cdc9d"
     },
     {
       "path": "webtorch/js/webtorch-worker.js",
@@ -249,8 +249,8 @@
     },
     {
       "path": "webtorch/llm.py",
-      "bytes": 346072,
-      "sha256": "55b1b8061b008d085ed2bc3ca11a13d750a75c37d0f9775d4752eb2c2a603a48"
+      "bytes": 366952,
+      "sha256": "1fb83f5c98133e83fc1e05ec9291bf7f205d52f964b67c6d8c0074ea656efe6a"
     },
     {
       "path": "webtorch/lm_engine.py",
