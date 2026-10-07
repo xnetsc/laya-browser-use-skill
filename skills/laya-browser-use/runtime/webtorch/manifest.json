@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "55fe4d2e33db6d4d5bf312b948272bd9a19c108f"
+    "commit": "ef3be86ce9e4d96d49cc9f549bda3cda0e79324c"
   },
   "files": [
     {
@@ -14,8 +14,8 @@
     },
     {
       "path": "NOTICE",
-      "bytes": 1249,
-      "sha256": "118e4efbd37758309c9e92cd9a5dc1165b3e735654b1805246672ae02211c60a"
+      "bytes": 1618,
+      "sha256": "0ea49c933ba00b2ecf82c7c6bd29b3310139608fb331fe03594070ca97c2ba5c"
     },
     {
       "path": "dist/backend.d.ts",
