@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "eac0d1875dc5c2b4e6f10dc4ba279c174e85d127"
+    "commit": "55fe4d2e33db6d4d5bf312b948272bd9a19c108f"
   },
   "files": [
     {
