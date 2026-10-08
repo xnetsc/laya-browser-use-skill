@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "ad87cfcb52e542830d6808c276ccd553f70f6536"
+    "commit": "03dbcbb3beb2a6c6ea01d090238a0a8b9326e6c0"
   },
   "files": [
     {
@@ -144,18 +144,23 @@
     },
     {
       "path": "webtorch/_core.py",
-      "bytes": 771170,
-      "sha256": "1f47d13201c4f8ec679520626bd0351c304b796b8d3e700bc3ff70dd8817218e"
+      "bytes": 773440,
+      "sha256": "9246bc6600e1e8598a3dd59aeba3bc957ba4ce22b5d5215322b95fec1d18525b"
     },
     {
       "path": "webtorch/_sdk.py",
-      "bytes": 42309,
-      "sha256": "b53475d7dac2a85a0800bd19d1c12196005f2837fbedc76775f630c8fab4fa95"
+      "bytes": 43224,
+      "sha256": "1b767cbcec4402ecb034d8991425c12c0638fbf46aa75411d12abaf54723ff92"
     },
     {
       "path": "webtorch/_wgsl2glsl.py",
       "bytes": 20215,
       "sha256": "bbfb3bd388e045ac8ed68e68dfbf37659edc87b39f326a711ecb49da57d7d96f"
+    },
+    {
+      "path": "webtorch/adapters.py",
+      "bytes": 6593,
+      "sha256": "e15109609a71f8ec69831b239105000cd774c996f64ef7b8f5d13ae63a280cc4"
     },
     {
       "path": "webtorch/audiofe.py",
@@ -179,8 +184,8 @@
     },
     {
       "path": "webtorch/decision.py",
-      "bytes": 87368,
-      "sha256": "9f7f44f87d22a03413c8a565dd0fdf2c1c65cdb56f54f51ee2ee737a9e136f80"
+      "bytes": 105272,
+      "sha256": "6db34cb42e28ae3d305e69233638c5fcc8dcb04af5d4327f0abd9181c5b9d6b5"
     },
     {
       "path": "webtorch/detection.py",
@@ -229,13 +234,13 @@
     },
     {
       "path": "webtorch/js/webtorch-host.js",
-      "bytes": 43886,
-      "sha256": "32c6ea5351ffec1f101d0e1ea133ee73878c211ed55362f02ec84a2a96293cee"
+      "bytes": 44135,
+      "sha256": "56f74095ad65da56d68dccfaff5651ac788b1c1a40b6c39aa16152d068475adc"
     },
     {
       "path": "webtorch/js/webtorch-main.js",
-      "bytes": 32877,
-      "sha256": "fd0ca8bf35668bf1289125ad505340bf54d1d0a74fb735939abdfbc3123cdc9d"
+      "bytes": 33020,
+      "sha256": "38016dd9dd09f75bcbe133688dc6da833eadacf67509c89e6b9ab3ead8a08652"
     },
     {
       "path": "webtorch/js/webtorch-worker.js",
@@ -249,8 +254,8 @@
     },
     {
       "path": "webtorch/llm.py",
-      "bytes": 366952,
-      "sha256": "1fb83f5c98133e83fc1e05ec9291bf7f205d52f964b67c6d8c0074ea656efe6a"
+      "bytes": 375198,
+      "sha256": "25d944be3eab8df518264d73974edb8ffbcaa9eb354a2e6beb9a2d47164adcb9"
     },
     {
       "path": "webtorch/lm_engine.py",
@@ -259,8 +264,8 @@
     },
     {
       "path": "webtorch/modules.json",
-      "bytes": 514,
-      "sha256": "5c6ad1c98db1ee8cd3f478a90f3db267184e5598d59b70f0096a5c29fb0886cf"
+      "bytes": 533,
+      "sha256": "91689821047cdf438d6258923ab13be616911aaacbd38ea451b42bcf9d62272e"
     },
     {
       "path": "webtorch/multimodal.py",
@@ -309,8 +314,8 @@
     },
     {
       "path": "webtorch/webio.py",
-      "bytes": 135085,
-      "sha256": "64ca93e20241edefcf7883d3037a122812253d180c1fdcfcd15ac56300e56bcc"
+      "bytes": 136367,
+      "sha256": "3fb9d3cefce56ee65cd8f587af05374520c10dbecb50b292cb45481a40ff6e2c"
     }
   ]
 }
