@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "473ab9570ceb92e1735060bf318c4e0a248f61a7"
+    "commit": "bf5add7299f869f13691cba96c4ee58709df2f0b"
   },
   "files": [
     {
@@ -244,8 +244,8 @@
     },
     {
       "path": "webtorch/js/webtorch-worker.js",
-      "bytes": 20232,
-      "sha256": "ccd47f1b65ab18c9daa6d4691195b54b6d4f5b1e4d141dbcdf1522562bcc030d"
+      "bytes": 20690,
+      "sha256": "febceb05c9a86f5b557353c635d6e0b712878ffce5a6d2341330c08265b9a008"
     },
     {
       "path": "webtorch/linear_attn.py",
@@ -254,8 +254,8 @@
     },
     {
       "path": "webtorch/llm.py",
-      "bytes": 376766,
-      "sha256": "0999a2008f0b3f3562c4d949d711d187fdbef7b457f989bb83d82cf8d3b2cc09"
+      "bytes": 377658,
+      "sha256": "a1a27adc9a135d8dedaaac692fcf2874bd51e4fa32fc06ae5dbf1ee119327a54"
     },
     {
       "path": "webtorch/lm_engine.py",
