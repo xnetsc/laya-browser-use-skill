@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "https://github.com/xnetsc/webpytorch.git",
     "ref": "main",
-    "commit": "bf5add7299f869f13691cba96c4ee58709df2f0b"
+    "commit": "2802f461ac7a6bdf47e377f49b6801c3c0364a3d"
   },
   "files": [
     {
@@ -94,13 +94,13 @@
     },
     {
       "path": "dist/webgpu/webgpuComputeContext.d.ts",
-      "bytes": 7260,
-      "sha256": "71afeceeeb688ede2825d241153c9e90d0adf2739cfbe27932af057cbc705dfd"
+      "bytes": 7410,
+      "sha256": "0c3da5e1d7450d83b9c01a2f27d98b72d7fc510f3524b9ed2a4a9dec606cf590"
     },
     {
       "path": "dist/webgpu/webgpuContext.d.ts",
-      "bytes": 3452,
-      "sha256": "5a9e2301773d0312c92621b1288bd35cedfc5605c54186895c73786c9f84069a"
+      "bytes": 3722,
+      "sha256": "08e84a7d1dd5ae8ebd4b8846e8704363d683c2a14cd449209b79f92c3435957c"
     },
     {
       "path": "dist/webgpu/webgpuTensorBuffer.d.ts",
@@ -114,13 +114,13 @@
     },
     {
       "path": "dist/wgpy-main.js",
-      "bytes": 99181,
-      "sha256": "fae6c243e4de63ed33e7e9590a426348d92e8262ba255ca0d4d393a0ef06eff3"
+      "bytes": 100058,
+      "sha256": "c5b0b82b8325496f927ad71c02defb3ca6030d8795217d664a4c549170642a23"
     },
     {
       "path": "dist/wgpy-worker.js",
-      "bytes": 68968,
-      "sha256": "4f085d9a5b590ce1118caa85ee11a6f17cd340e16b9e53abce28c43c39026389"
+      "bytes": 69188,
+      "sha256": "c412bcb6b7c4e1a4ff3f1e4159e76ec1db376d48e4e868f0684de6ed9e959d26"
     },
     {
       "path": "dist/wgpy_webgl-1.0.0-py3-none-any.whl",
@@ -129,8 +129,8 @@
     },
     {
       "path": "dist/wgpy_webgpu-1.0.0-py3-none-any.whl",
-      "bytes": 59879,
-      "sha256": "995ff28108eebdda3a836e3776cd2e0abd2232186763a9b26477b7a14bd51065"
+      "bytes": 59903,
+      "sha256": "834e525d21a7a3b475e2b5bf9edef05a0f1489cc3e864005f295899022e4335b"
     },
     {
       "path": "dist/worker.d.ts",
@@ -144,8 +144,8 @@
     },
     {
       "path": "webtorch/_core.py",
-      "bytes": 783953,
-      "sha256": "8cef81b5cc29e45ae3312c5ec71661dc9a241253e9fabecaac43cec881069d08"
+      "bytes": 785457,
+      "sha256": "b66445457880a4ded46b248361fb6e122eae702734fa59b0696ec64badfaad32"
     },
     {
       "path": "webtorch/_sdk.py",
@@ -254,8 +254,8 @@
     },
     {
       "path": "webtorch/llm.py",
-      "bytes": 377658,
-      "sha256": "a1a27adc9a135d8dedaaac692fcf2874bd51e4fa32fc06ae5dbf1ee119327a54"
+      "bytes": 378578,
+      "sha256": "4a8864253b549ea89d06a4f20ef876b01c7903d94eb3b5df511d62cfa03b6f67"
     },
     {
       "path": "webtorch/lm_engine.py",
